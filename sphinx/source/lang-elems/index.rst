@@ -14,6 +14,7 @@ Alphabetic list:
 .. toctree::
     :maxdepth: 1
 
+    adt
     expressions
     functions
     inductive
