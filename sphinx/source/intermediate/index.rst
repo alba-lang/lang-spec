@@ -23,7 +23,8 @@ definitions in fully elaborated form. Fully elaborated means specifically:
 - Overloaded symbols are disambiguated with their namespace.
 
 - No operator expressions. Only function application, i.e. ``2 + 3`` is not
-  allowed, it has to be encoded as ``$Int.+ 2 3``.
+  allowed, it has to be encoded as ``$Int.+ 2 3``. The intermediate language has
+  no concept of precedence and associativity.
 
 - Global and local names are encoded especially as described in the section
   `Names`_.
