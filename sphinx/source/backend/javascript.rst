@@ -53,6 +53,9 @@ corresponding unicode code point.
 
 
 
+
+
+
 Algebraic Types
 --------------------------------------------------
 
@@ -319,6 +322,103 @@ The compiler generates the following javascript functions::
 
 Eliminate Recursion
 --------------------------------------------------
+
+Stack size is limited in javascript, heapsize is limited just by the available
+memory in the javascript engine.
+
+Recursion can be eliminated completely by shifting memory from the stack to the
+heap. The cost of the elimination of recursion is a bounce object and a function
+closure per recursive call.
+
+It is possible to eliminate recursion by using *trampolines*. The key of
+trampolines is the bounce object.
+
+.. code-block:: alba
+
+    class Bounce (A: Any) :=
+        done: A -> Bounce
+        more: (Unit -> Bounce) -> Bounce
+
+A bounce object contains either a value or a function which computes the next
+bounce object. We can iterate over a series of bounce objects.
+
+.. code-block:: alba
+
+    iter {A: Any}: Bounce A -> A := case
+        \ (done x)  :=  y
+        \ (more f)  :=  iter (f ())
+
+Evidently ``iter`` is tail recursive and can be implemented by a javascript
+loop.
+::
+
+    function iter (b) {
+        for(;;) {
+            switch (b[0]){
+            case 0:
+                return b[1]         // return content
+            default:
+                b[1]()              // compute next bounce
+            }
+        }
+    }
+
+
+A recursive function where the recursive calls are not tail calls has the form
+(without loss of generality we consider a function with one argument only and
+two recursive calls).
+
+.. code-block:: alba
+
+    f: A -> R := case
+        \ p₁    := e₁     -- non recursive case
+        ...
+        \ p₅    := r₅ x y where
+                    x := f a₁
+                    y := f a₂
+        ...
+
+``r₅`` is some simple function using the return values of the recursive calls as
+arguments. ``r₅ x y`` represents the right hand side of the clause with
+recursive calls which are not tail calls.
+
+We convert the function ``f`` into the two functions ``fCPS`` and ``f`` which
+are equivalent to the original function. Instead of feeding ``fCPS`` only with
+the argument of ``f`` we use the argument of ``f`` and a continuation ``k``
+which uses the result of ``f`` and computes the remaining bounce object.
+
+.. code-block:: alba
+
+    fCPS (a: A) (k: R -> Bounce R): Bounce R :=
+        more (next a k)
+        where
+            next: A -> (R -> Bounce R) -> Unit -> Bounce R
+            := case
+                \ p₁ k _ := k e₁
+                ...
+                \ p₅ k _ :=
+                    fCPS
+                        a₁
+                        (\ x :=
+                            fCPS
+                                a₂
+                                (\ y := r₅ x y))
+
+
+The function ``fCPS`` constructs one bounce object and two function closures per
+call. The function ``f`` just uses ``fCPS`` and ``iter`` to compute the final
+result via iteration.
+
+
+.. code-block:: alba
+
+    f (a: A): R :=
+        iter (fCPS a done)
+
+
+The stack size does not grow during the iteration. The translation of the
+function ``fCPS`` to a javascript function is straightforward.
+
 
 .. note::
     DRAFT
