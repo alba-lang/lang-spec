@@ -31,6 +31,28 @@ Javascript allows identifiers to begin with ``_`` and to contain ``$``. Dots
 
 
 
+
+Strings and Characters
+--------------------------------------------------
+
+The elements of javascript strings are 16 bit unsigned integer values. Each
+element is treated as a UTF-16 code unit value.
+
+
+There is no character object in javascript. Characters can be represented by one
+element strings (or two elements strings in case of surrogat pairs).
+
+
+Two subsequent elements ``c₁`` and ``c₂`` can be a surrogate pair. This is the
+case if ``c₁`` is in the range ``0xd800 - 0xdbff`` and ``c₂`` is in the range
+``0xdc00 - 0xdfff``. In that case both represent the unicode code point ``(c₁ -
+0xd800) * 0x400 + (c₂ - 0xdc00) + 0x10000``.
+
+All elements which are not part of a surrogat pair are interpreted as the
+corresponding unicode code point.
+
+
+
 Algebraic Types
 --------------------------------------------------
 
