@@ -53,6 +53,10 @@ General
 
     class Boolean := true; false
 
+    class Reflect (A: Prop): Bool → Any :=
+        true:  A        →   Reflect true
+        false: Not A    →   Reflect false
+
     class List {α: Any} := ([]); (::): α → List → List
 
     class (,) (α β: Any) := (,)
