@@ -22,5 +22,6 @@ Alphabetic list:
     let-where
     modules
     pattern-match
+    record
     types
     universes
