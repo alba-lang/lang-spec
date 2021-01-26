@@ -33,15 +33,18 @@ defines the algebraic type
 with the additional functions
 ::
 
-    firstName: Person -> String := case
+    Person.firstName: Person -> String := case
         λ (mk name _ _) := name
 
-    lastName: Person -> String := case
+    Person.lastName: Person -> String := case
         λ (mk _ name _) := name
 
-    age: Person -> String := case
+    Person.age: Person -> String := case
         λ (mk _ _ age) := age
 
+
+Note that the field accessor functions are declared in the namespace of the
+record type.
 
 
 We construct records with a record expression
