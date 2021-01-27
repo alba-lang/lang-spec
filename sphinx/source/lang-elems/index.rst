@@ -23,5 +23,6 @@ Alphabetic list:
     modules
     pattern-match
     record
+    telescope
     types
     universes
