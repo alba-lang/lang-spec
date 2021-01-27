@@ -261,16 +261,13 @@ Comments
 
     -- spans to the end of line
 
-    --| docu comment spans to the end of line
+    reverse {: short comment :} list
 
-    reverse {| short comment |} list
+    {: Multiline comment
 
-    {| Multiline comment
+        spans several lines  {: can be nested :}
+    :} all {A: Any}: A
 
-        spans several lines  {| can be nested |}
-    |} all {A: Any}: A
-
-    {|| multiline docu comment. |}  ℕ → ℤ
 
 
 
@@ -290,6 +287,50 @@ A whitespace is one of:
 Note that tabs are not valid lexical tokens. Reason: Since the language is
 indentation sensitive and tabs are interpreted differently by different editors,
 the layout would  not be well defined independently from the tabsize.
+
+
+
+Allowed UTF-8 Characters
+==================================================
+
+In strings and characters all UTF-8 code points are alllowed. In the remainder
+only the following are valid UTF-8 code points within source code.
+
++--------+------------+------------------+
+| Symbol | Code Point | Ascii Equivalent |
++--------+------------+------------------+
+| α      | U+03B1     |                  |
++--------+------------+------------------+
+| β      | U+03B2     |                  |
++--------+------------+------------------+
+| γ      | U+03B3     |                  |
++--------+------------+------------------+
+| λ      | U+03BB     | ``\``            |
++--------+------------+------------------+
+| ≤      | U+2264     | ``<=``           |
++--------+------------+------------------+
+| ≥      | U+2265     | ``>=``           |
++--------+------------+------------------+
+| ∀      | U+2200     | ``all``          |
++--------+------------+------------------+
+| →      | U+2192     | ``->``           |
++--------+------------+------------------+
+| ⊢      | U+22A2     | ``|-``           |
++--------+------------+------------------+
+| ⊨      | U+22A8     | ``|=``           |
++--------+------------+------------------+
+| ∧      | U+2227     | ``And``          |
++--------+------------+------------------+
+| ∨      | U+2228     | ``Or``           |
++--------+------------+------------------+
+| ¬      | U+00ac     | ``Not``          |
++--------+------------+------------------+
+| ℕ      | U+03BB     | ``Natural``      |
++--------+------------+------------------+
+| ℤ      | U+03BB     | ``Integer``      |
++--------+------------+------------------+
+
+
 
 
 
