@@ -191,7 +191,7 @@ declared in the following form ::
         class T₂: K₂ :=
             <constructor>
             ...
-        class T₃ K₃ :=
+        class T₃: K₃ :=
             <constructor>
             ...
 
@@ -216,60 +216,72 @@ Rules:
 
 
 
+Mutually defined inductive types are just a convenience. They do not make the
+language more expressive. For each set of mutually defined inductive types there
+exists one inductive type with one index more than the mutually defined
+inductive types which is isomorphic to the mutually defined inductive types.
+
+For the above examples of ``Tree`` and ``Forest`` we define and index type and a
+type which includes both ::
+
+    class Index := tree; forest
+
+    class TF (A: Any): Index → Any :=
+        tf_nil  :   TF forest
+
+        tf_node :   A → TF forest → TF tree
+
+        tf_cons :   TF tree → TF forest → TF forest
+
+
+In order to show that both definition are isomorphic we make functions
+``treeToTF`` and ``treeToForest`` which transform ``Tree`` and ``Forest`` into
+``TF`` and the functions ``tfToTree`` and ``tfToForest`` which does the
+transformation in the other direction.
+
+First ``treeToTF`` and ``forestToTF`` which must be mutually recursive, because
+``Tree`` and ``Forest`` are mutually defined ::
+
+    mutual {A: Any}
+    :=
+        treeToTF: Tree A → TF A tree := case
+            \ (node a f) :=
+                tf_node a (forestToTF f)
+
+        forestToTF: Forest A → TF A forest := case
+            \ [] :=
+                tf_nil
+            \ (t :: f) :=
+                tf_cons t f
+
+
+Then the backward direction ::
+
+    mutual {A: Any}
+    :=
+        tfToTree: TF A tree → Tree A := case
+            \ (tf_node a t) :=
+                node a (tfToForest f)
+
+        tfToForest: TF A forest → Forest A := case
+            \ tf_nil :=
+                []
+            \ (tf_cons t f) :=
+                t :: f
+
+
+Note that in the backward direction only the pattern clauses which are possible
+have to be present. For details see chapter :ref:`Pattern Match`.
+
+
+
+
+
+
+
 Nested Inductive Types
 ============================================================
 
 
 Positivity
 ============================================================
-
-
-
-.. note::
-    The following is DRAFT
-
-
-Draft
-========================================
-
-
-
-Examples
-------------------------------
-
-
-.. code-block::
-
-    mutual
-        (α: Any)            -- common parameter
-    :=
-        class Tree :=
-            node: α → Forest → Tree
-        class Forest :=
-            []      : Forest
-            (::)    : Tree → Forest → Forest
-
-
-    mutual :=
-        class Even: Predicate ℕ :=
-            zero        : Even zero
-            even1 {n}   : Odd n → Even (succ n)
-        class Odd:  Predicate ℕ :=
-            odd1 {n}    : Even n → Odd (succ n)
-
-
-Violated Positivity
-------------------------------
-
-::
-
-    class Bad :=
-        make: (Bad → Bad) → Bad
-        --   ^ violated positivity
-
-    run: Bad -> Bad := case
-        λ (make f) := f (make f)
-
-    -- non terminating expression
-
-    run (make run)
