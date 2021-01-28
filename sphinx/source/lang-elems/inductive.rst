@@ -236,7 +236,7 @@ type which includes both ::
 
 In order to show that both definition are isomorphic we make functions
 ``treeToTF`` and ``treeToForest`` which transform ``Tree`` and ``Forest`` into
-``TF`` and the functions ``tfToTree`` and ``tfToForest`` which does the
+``TF`` and the functions ``tfToTree`` and ``tfToForest`` which do the
 transformation in the other direction.
 
 First ``treeToTF`` and ``forestToTF`` which must be mutually recursive, because
@@ -252,7 +252,7 @@ First ``treeToTF`` and ``forestToTF`` which must be mutually recursive, because
             \ [] :=
                 tf_nil
             \ (t :: f) :=
-                tf_cons t f
+                tf_cons (treeToTF t) f
 
 
 Then the backward direction ::
@@ -267,7 +267,7 @@ Then the backward direction ::
             \ tf_nil :=
                 []
             \ (tf_cons t f) :=
-                t :: f
+                (tfToTree t) :: (tfToForest f)
 
 
 Note that in the backward direction only the pattern clauses which are possible
