@@ -104,6 +104,7 @@ Constructors:
       The elaborator adds ``: Name``. Since there are no indices, no ambiguity
       exists.
 
+.. _Positivity:
 
 Positivity:
     In case that the inductive type ``Name`` appears in the constructor
@@ -279,8 +280,101 @@ have to be present. For details see chapter :ref:`Pattern Match`.
 
 
 
+
+
+
+
+
 Nested Inductive Types
 ============================================================
+
+
+We can use an already existing inductive type use it nestedly within a new
+inductive type. A simple example is a tree whose children (aka forest) are
+implemented as a list of trees.
+
+::
+
+    class TreeL (A: Any) :=
+        nodeL: A → List TreeL → TreeL
+    --                  ^^^^^
+    --                  positive occurrence of 'TreeL', but nested
+    --                  within 'List'
+
+
+Modified Positivity:
+    The above definition of ``TreeL`` violates the positivity condition
+    formulated in the section :ref:`General Inductive Types <Positivity>` above.
+
+    Reason: The inductive type ``TreeL`` occurs in  a positive position of the
+    second argument type of the constructor ``nodeL``. However it does not occur
+    immediately as ``TreeL`` but nested as ``List TreeL``.
+
+    This is legal provided that:
+
+    - The wrapper type (in the example ``List``) is an inductive type which is
+      not mutually defined.
+
+    - The new inductive type (in the example ``TreeL``) occurs at a parameter
+      position within the wrapper type in the same way as required by the
+      :ref:`original positivity rule <Positivity>`.
+
+    - The used parameter of the wrapper type appears in all arguments of all
+      constructors of the wrapper type only positively.
+
+
+As with mutually defined inductive types, nested inductive types do not make the
+language more expressive. The nesting is just for convenience. There is always a
+collection of mutually inductive types which are equivalent with the nested
+inductive type.
+
+
+Construction of the Equivalent Types:
+    - Add the wrapper type applied to the newly defined inductive type as an
+      additional mutually defined type.
+
+    - The constructors of the wrapper type become constructors of the added
+      inductive type with the parameter properly substituted.
+
+
+For the example ``TreeL`` the equivalent mutual definition is ::
+
+    mutual (A: Any) :=
+        class Tree :=
+            node: A → Forest → Tree
+        class Forest :=
+            []: Forest
+            (::): Tree → Forest → Forest
+
+In order to prove the equivalence we define functions which do the forward and
+backward transformation between the types ::
+
+    mutual {A: Any} :=
+        treeToTreeL: Tree A → TreeL A := case
+            \ (node a f) :=
+                nodeL a (forestToTreeL f)
+
+        forestToTreeL: Forest A → List (TreeL A) := case
+            \ [] :=
+                List.[]
+            \ (t :: f) :=
+                List.( treeToTreeL t :: forestToTreeL f)
+
+    mutual {A: Any} :=
+        treeLtoTree: TreeL A → Tree A := case
+            \ (nodeL a f) :=
+                Tree.(node a (treeLtoForest f))
+
+        treeLtoForest: List (TreeL A) → Forest A := case
+            \ [] :=
+                Forest.[]
+            \ (t :: f) :=
+                treeLtoTree f :: treeLtoForest f
+
+
+
+
+
 
 
 Positivity
