@@ -405,6 +405,7 @@ to show that there is a church encoding for all simple inductive types.
 
 
 
+
 Evaluation of Inductive Types
 --------------------------------------------------
 
@@ -509,11 +510,11 @@ to transform the ordinal number to a natural number.
 Let's define the evaluation function for ordinals generically ::
 
     eval
-        {R: Any}                        -- goal of evaluation
-        (z: R)                          -- The 3 elementary
-        (n: R → R)                      -- evaluation functions
-        (l: (R → R) → R)                -- one for each constructor
-    : Ord → R
+        {G: Any}                        -- goal of evaluation
+        (z: G)                          -- The 3 elementary
+        (n: G → G)                      -- evaluation functions
+        (l: (G → G) → G)                -- one for each constructor
+    : Ord → G
     := case
         \ start     :=  z
         \ (next o)  :=  n (eval o)
@@ -531,10 +532,10 @@ wellfounded relations ::
     eval
         {A: Any}
         {R: A → A → Prop}
-        {F: A → Prop}                   -- goal of the evaluation
-        (g: all y: R y x → F y)         -- elementary evaluator for 'acc'
+        {G: A → Prop}                   -- goal of the evaluation
+        (g: all y: R y x → G y)         -- elementary evaluator for 'acc'
     :
-        all {x}: Acc R x → F x
+        all {x}: Acc R x → G x
     :=
     case
         \ (acc f) :=
@@ -572,12 +573,12 @@ Type signature of the generic evaluation function ::
 
     eval
         {p₁: P₁} ...                    -- The parameters of 'Name'
-        {F: all (i₁: I₁) ... : Sort}    -- Goal of the elimination
+        {G: all (i₁: I₁) ... : Sort}    -- Goal of the elimination
         (e₁: ...)                       -- Elementary evaluation
         (e₂: ...)                       -- functions
         ....
     :
-        all i₁ i₂ ... : Name p₁ p₂ ... i₁ i₂ ... → F i₁ i₂ ...
+        all i₁ i₂ ... : Name p₁ p₂ ... i₁ i₂ ... → G i₁ i₂ ...
     :=
     case
         \ (c₁ ....) := e₁ ...
@@ -598,3 +599,107 @@ evaluation function.
 
 Since we insist on positivity this works nicely in case that the constructor
 argument is a function.
+
+
+
+Church Encodings
+--------------------------------------------------
+
+An evaluation function associated with an inductive type can be used to
+translate the inductive type into a Church encoding for the type.
+
+Each Church encoding needs a type and a function for each constructor. Since
+Church encodings require impredicativity all Church encoded types live in the
+``Prop`` universe.
+
+In the following examples we prefix each Church encoded type with ``C`` to
+distinguish it from the inductive type.
+
+Each Church encoded object is a function with :math:`n + 1` arguments where
+:math:`n` is the number of constructors of the inductive type. The first
+argument is the goal (or the goal predicate in case of indexed types). The
+following :math:`n` arguments have the same type as the arguments give to the
+evaluation functions.
+
+A Church encoded object *implements* the evaluation function.
+
+Since typed lambda calculus is *strongly normalizing* and the execution of an
+evaluation function corresponds to reducing a term in typed lambda calculus, it
+is guaranteed that the execution of an evaluation function always terminates and
+cannot enter into an infinite loop.
+
+
+Example: Natural Number
+    ::
+
+        class ℕ :=
+            zero: ℕ
+            succ: ℕ → ℕ
+
+        eval {G: Any} (z: G) (s: G → G): ℕ → G := case
+            \ zero :=
+                z
+            \ succ n :=
+                s (eval n)
+
+        Cℕ: Prop :=                 -- Type of the Church encoding
+            all {G: Any}: G → (G → G) → G
+
+        Cℕ.zero: Cℕ :=
+            \ {G} z s := z
+
+        Cℕ.succ: Cℕ → Cℕ :=
+            \ n {G} z s :=
+                s (n {G} z s)
+
+Example: List
+    ::
+
+        class List (A: Any) :=
+            []: List
+            (::): A → List → List
+
+        eval {A G: Any} (nil: G) (cons: A → G → G): List A → G := case
+            \ [] :=
+                nil
+            \ (head :: tail) :=
+                cons head (eval tail)
+
+        CList (A: Any): Prop :=
+            all {G: Any}: G → (A → G → G) → G
+
+        Clist.nil {A: Any}: Clist A :=
+            \ {G} n c := n
+
+        CList.cons {A: Any}: A → Clist A → CList A :=
+            \ head tail {G} n c :=
+                c head (tail G n c)
+
+
+Example: Tree
+    ::
+
+        class Tree (A: Any) :=
+            empty: Tree
+            node:  Tree → A → Tree → Tree
+
+        eval {A G: Any} (e: G) (n: G → A → G → G)
+        : Tree A → G
+        := case
+            \ empty :=
+                e
+            \ (node left a right) :=
+                n (eval left) a (eval right)
+
+        CTree {A: Any} : Prop :=
+            all {G: Any}: G → (G → A → G) → G
+
+        CTree.empty {A: Any}: CTree A :=
+            \ {G} e n := e
+
+        CTree.node {A: Any}: CTree A → A → CTree A → CTree A :=
+            \ left a right {G} e n :=
+                n
+                    (left {G} e n)
+                    a
+                    (right {G} e n)
