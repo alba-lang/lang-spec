@@ -18,6 +18,7 @@ Alphabetic list:
     expressions
     functions
     inductive
+    implicit
     inspect
     let-where
     modules
