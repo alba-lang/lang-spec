@@ -104,7 +104,7 @@ Constructors:
       The elaborator adds ``: Name``. Since there are no indices, no ambiguity
       exists.
 
-.. _Positivity:
+.. _Positivity Rule:
 
 Positivity:
     In case that the inductive type ``Name`` appears in the constructor
@@ -304,7 +304,8 @@ implemented as a list of trees.
 
 Modified Positivity:
     The above definition of ``TreeL`` violates the positivity condition
-    formulated in the section :ref:`General Inductive Types <Positivity>` above.
+    formulated in the section :ref:`General Inductive Types <Positivity Rule>`
+    above.
 
     Reason: The inductive type ``TreeL`` occurs in  a positive position of the
     second argument type of the constructor ``nodeL``. However it does not occur
@@ -317,7 +318,7 @@ Modified Positivity:
 
     - The new inductive type (in the example ``TreeL``) occurs at a parameter
       position within the wrapper type in the same way as required by the
-      :ref:`original positivity rule <Positivity>`.
+      :ref:`original positivity rule <Positivity Rule>`.
 
     - The used parameter of the wrapper type appears in all arguments of all
       constructors of the wrapper type only positively.
@@ -377,5 +378,223 @@ backward transformation between the types ::
 
 
 
-Positivity
+Why Positivity?
 ============================================================
+
+In the chapter `General Inductive Types`_ there have been given an example of
+what can go wrong, if positivity is violated -- an function with infinite
+recursion. In this section we are going to show that positivity guarantees
+absence of endless loop or guarantees strong normalization.
+
+
+Alba's type system is a superset of the extended calulus of constructions as
+presented in the thesis [LuoECC]_.
+
+One way to show that Alba's type system is sound is to show that all constructs
+which are not in the extended calculus of constructions can be reduced to
+constructs in the extended calculus of constructions.
+
+In the following we demonstrate that for each inductive object which can be
+constructed by constructors of an inductive type there is a corresponding church
+encoding in the calculus of constructions.
+
+We have already shown that mutually defined inductive types and nested inductive
+types can all be expressed as simple inductive types. Therefore it is sufficient
+to show that there is a church encoding for all simple inductive types.
+
+
+
+
+Evaluation of Inductive Types
+--------------------------------------------------
+
+The constructors on an inductive type define a term language. Here we use the
+example of binary trees. ::
+
+    class Tree :=
+        empty: Tree
+        node:  Tree → Char → Tree → Tree
+
+in order to construct the terms ::
+
+    empty
+
+    node empty 'a' empty
+
+    node (node (node empty 'a' empty) 'b'  (node empty 'c' empty))
+
+Since constructor look like functions (or constants) without a definition, such
+a term has no meaning. We can give the term a meaning if we define a way how to
+evaluate the term. Let's find a way to evaluate any tree expression to a natural
+number. Then we need a way to transform the empty tree to a number and a way to
+transform the combination of a number a character and a number to a new number.
+
+The signatures of the constructor types define the signatures of the evaluation
+functions.
+
++-------------+--------------------------------+----------------------+
+| constructor | signature                      | type for eval        |
++-------------+--------------------------------+----------------------+
+| empty       | ``ℕ``                          | ``ℕ``                |
++-------------+--------------------------------+----------------------+
+| node        | ``Tree → Char → Tree → Tree``  | ``ℕ → Char → ℕ → ℕ`` |
++-------------+--------------------------------+----------------------+
+
+The recipi is quite simple. We just replace each occurrence of ``Tree`` by
+``ℕ``.
+
+Now we can write an evaluation function for binary trees ::
+
+    eval (s: ℕ) (f: N → Char → ℕ → ℕ): Tree → ℕ := case
+        \ empty                 :=  s
+        \ (node left c right)   :=  f (eval left) c (eval right)
+
+
+Let's try the same for a type with violated positivity ::
+
+    class Bad :=
+        make: (Bad → Bad) → Bad
+
++-------------+--------------------------------+----------------------+
+| constructor | signature                      | type for eval        |
++-------------+--------------------------------+----------------------+
+| make        | ``(Bad → Bad) → Bad``          | ``(ℕ → ℕ) → ℕ``      |
++-------------+--------------------------------+----------------------+
+
+::
+
+    eval (e: (ℕ → ℕ) → ℕ): Bad → ℕ := case
+        \ make f :=
+            e (\ n := ???)
+
+            {:  We have
+                - f:    Bad → Bad
+                - eval: Bad → ℕ
+                There is no way to construct a natural number :}
+
+
+A more complicated but well behaved type is the type of ordinal numbers ::
+
+    class Ord :=
+        start: Ord
+        next:  Ord → Ord
+        lim:   (ℕ → Ord) → Ord
+
+
++-------------+--------------------------------+----------------------+
+| constructor | signature                      | type for eval        |
++-------------+--------------------------------+----------------------+
+| start       | ``Ord``                        | ``ℕ``                |
++-------------+--------------------------------+----------------------+
+| next        | ``Ord → Ord``                  | ``ℕ → ℕ``            |
++-------------+--------------------------------+----------------------+
+| lim         | ``(ℕ → Ord) → Ord``            | ``(ℕ → ℕ) → ℕ``      |
++-------------+--------------------------------+----------------------+
+
+
+
+Having this we create the evaluation function ::
+
+    eval (z: ℕ) (n: ℕ → N) (l: (ℕ → ℕ) → ℕ): Ord → ℕ := case
+        \ start     :=  z
+        \ (next o)  :=  n (eval o)
+        \ (lim f)   :=  l (\ n := eval (f n))
+
+You see the difference to ``Bad``? In the third case we have the pattern ``l (\
+n := ??)``. There is a number ``n`` which we can turn by ``f`` from the ``lim``
+constructor into an ordinal number and then we use a recursive call to ``eval``
+to transform the ordinal number to a natural number.
+
+
+Let's define the evaluation function for ordinals generically ::
+
+    eval
+        {R: Any}                        -- goal of evaluation
+        (z: R)                          -- The 3 elementary
+        (n: R → R)                      -- evaluation functions
+        (l: (R → R) → R)                -- one for each constructor
+    : Ord → R
+    := case
+        \ start     :=  z
+        \ (next o)  :=  n (eval o)
+        \ (lim f)   :=  l (\ n := eval (f n))
+
+
+Now the same for the more complicated accessibility type used to define
+wellfounded relations ::
+
+    class
+        Acc {A: Any} (R: A → A → Prop): A → Prop
+    :=
+        acc {x}: (all y: R y x → Acc y) → Acc x
+
+    eval
+        {A: Any}
+        {R: A → A → Prop}
+        {F: A → Prop}                   -- goal of the evaluation
+        (g: all y: R y x → F y)         -- elementary evaluator for 'acc'
+    :
+        all {x}: Acc R x → F x
+    :=
+    case
+        \ (acc f) :=
+            g (\ rYX := eval (f rYX))
+
+
+
+
+
+
+General Scheme for Evaluation
+--------------------------------------------------
+
+
+In general an inductive type has the form::
+
+    class
+        Name
+            (p₁: P₁) (p₂: P₂) ...           -- parameters
+            :   all (i₁: I₁) ...            -- indices
+                : Sort                      -- 'Any or Prop'
+    :=
+        -- zero or more constructors
+        c₁:
+            all (b₁₁: B₁₁) (b₁₂: B₁₂) ...   -- constructor arguments
+            : Name a₁₁ a₁₂ ...              -- constructed type
+
+        c₂:
+            all (b₂₁: B₂₁) (b₂₂: B₂₂) ...
+            : Name a₂₁ a₂₂ ...
+
+        ...
+
+Type signature of the generic evaluation function ::
+
+    eval
+        {p₁: P₁} ...                    -- The parameters of 'Name'
+        {F: all (i₁: I₁) ... : Sort}    -- Goal of the elimination
+        (e₁: ...)                       -- Elementary evaluation
+        (e₂: ...)                       -- functions
+        ....
+    :
+        all i₁ i₂ ... : Name p₁ p₂ ... i₁ i₂ ... → F i₁ i₂ ...
+    :=
+    case
+        \ (c₁ ....) := e₁ ...
+        \ (c₂ ....) := e₂ ...
+        ...
+
+
+
+The goal ``F`` of the elimination has the same type as the kind of the inductive
+type. The elementary elimination functions ``e₁ e₂ ...`` have the same type as
+the constructors with all ``Name a₁ a₂ ...`` replaced by ``F a₁ a₂ ...``.
+
+Since the constructors and the elementary evaluation functions have the same
+structure you can call the elementary evaluation functions with the constructor
+arguments. In case the constructor argument is an object of the inductive type,
+we call eval recursively to evaluate it and then feed it to the elementary
+evaluation function.
+
+Since we insist on positivity this works nicely in case that the constructor
+argument is a function.
