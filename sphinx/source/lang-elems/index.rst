@@ -2,12 +2,7 @@
 Language Elements
 ****************************************
 
-.. toctree::
-    :maxdepth: 1
 
-    lexical
-    source-file
-    style
 
 Alphabetic list:
 
@@ -21,9 +16,12 @@ Alphabetic list:
     implicit
     inspect
     let-where
+    lexical
     modules
     pattern-match
     record
+    source-file
+    style
     telescope
     types
     universes
