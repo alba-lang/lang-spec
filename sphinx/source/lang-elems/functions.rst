@@ -41,6 +41,8 @@ An named function has the form ::
 Named functions can be used in :ref:`local definitions <Local Definitions>` or
 top level definitions.
 
+At the top level of a :ref:`module <Modules>` the function definition ``:=
+<expression>`` can be omitted. In that case it is just a function declaration.
 
 
 
@@ -90,6 +92,11 @@ Example::
 
 
 
+
+
+
+
+.. _Mutually Recursive:
 
 Mutually Recursive Functions
 ============================================================

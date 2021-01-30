@@ -175,6 +175,7 @@ Some examples of inductive types::
 
 
 
+.. _Mutually Inductive:
 
 Mutually Inductive Types
 ============================================================

@@ -3,6 +3,21 @@ Language Elements
 ****************************************
 
 
+The language elements are highly mutully recursive. E.g. definitions contain
+expressions and expressions can contain local definitions. Therefore there is no
+natural order to present the language elements and we present them in alphabetic
+order.
+
+However the most important language concepts are:
+
+- :ref:`Projects`
+- :ref:`Packages`
+- :ref:`Modules`
+- :ref:`Inductive Types`
+- :ref:`Functions`
+- :ref:`Pattern Match`
+
+
 
 Alphabetic list:
 
@@ -10,7 +25,6 @@ Alphabetic list:
     :maxdepth: 1
 
     adt
-    expressions
     functions
     inductive
     implicit
@@ -18,8 +32,11 @@ Alphabetic list:
     lexical
     local-defs
     modules
+    packages
     pattern-match
+    projects
     record
+    section
     source-file
     style
     telescope
