@@ -15,8 +15,8 @@ Alphabetic list:
     inductive
     implicit
     inspect
-    let-where
     lexical
+    local-defs
     modules
     pattern-match
     record

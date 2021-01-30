@@ -1,3 +1,5 @@
+.. _Local Definitions:
+
 ****************************************
-Let and Where Expressions
+Local Definitions
 ****************************************
