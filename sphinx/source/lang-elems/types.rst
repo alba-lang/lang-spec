@@ -4,7 +4,7 @@
 Types
 ************************************************************
 
-A type in head normal for is either a simple type or a function type. ::
+A type in head normal form is either a simple type or a function type. ::
 
     -- Simple types
     Prop
