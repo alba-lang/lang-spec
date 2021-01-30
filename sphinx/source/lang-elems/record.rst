@@ -10,11 +10,41 @@ Simple Records
 ============================================================
 
 
+Record Declaration
+------------------------------------------------------------
+
 
 Records are just :ref:`inductive types <Inductive Types>` with one nameless
 constructor. Therefore it is sufficient to list the arguments with their names.
 
-The declaration
+General form of a record definition::
+
+    record
+        Name <params>: Sort     -- The optional sort is 'Prop' or 'Any'
+    :=                          -- If ommitted 'Any' is used.
+        (field₁: Type₁)
+        (field₂: Type₂)
+        ...
+
+    -- equivalent inductive type
+    class
+        Name <params>: Sort
+    :=
+        _: all (field₁: Type₁) (field₂: Type₂) ... : Name
+    --  ^  nameless constructor
+
+
+For a record definition the compiler declares the field accessor functions ::
+
+    Name.field₁: Name <params> → Type₁
+    Name.field₂: Name <params> → Type₂
+    ...
+
+The field accessor functions are declared in the namespace of the record.
+
+
+
+E.g. the declaration
 
 ::
 
@@ -43,29 +73,68 @@ with the additional functions
         λ (mk _ _ age) := age
 
 
-Note that the field accessor functions are declared in the namespace of the
-record type.
 
 
-We construct records with a record expression
+
+Record Expressions
+------------------------------------------------------------
+
+There are no constructor names for records. But there are record expressions
+which allow the construction or record objects.
+
 ::
 
-    record ("John", "Boy", 5)       -- exact order!
+    record ["John", "Boy", 5]           -- exact order, like a list.
 
-    record (age := 5, lastName := "Boy", firstName := "John")
+    record {age := 5, lastName := "Boy", firstName := "John"}
+        -- arbitrary order, like a set.
 
 
 
-In case of ambiguity we add a type annotation
+In case of ambiguity we add a type or a namespace annotation
 ::
 
-    record ("Billy", "Boy", 3): Person
+    record ["Billy", "Boy", 3]: Person
 
-Updating record fields is easy
+    Person.record ["Billy", "Boy", 3]
+
+
+
+Updating record fields is nondestructive and is done with the syntax:
 ::
 
-    record (p; age := age p + 1)
+    record {person; age := age person + 1}
 
+This expression creates a copy of the record ``person`` with the field ``age``
+updated. One or more fields can be updated.
+
+
+
+
+
+Record Pattern Match
+------------------------------------------------------------
+
+Since records are just a special kind of inductive types, they can be
+:ref:`pattern matched <Pattern Match>`. Because of the absence of a constructor
+name, record expressions of the form ``record [field₁, field₂, ...]`` can be
+used as pattern.
+
+E.g. with the record ::
+
+    record Refine {A: Any} (P: A → Prop) :=
+        (value: A)
+        (proof: P value)
+
+we can pattern match
+::
+
+    f {A: Any} {P: A → Prop}
+    : Refine P → T
+    := case
+        \ record [v, prf] :=
+            expr            -- any expression using 'v' and 'prf'
+                            -- and returning a 'T'
 
 
 
@@ -82,14 +151,14 @@ Records can have dependent types
 
     -- corresponding inductive type
     class Sigma {A: Any} (P: A -> Prop) :=
-        sigma x: P x -> Sigma
+        _ x: P x -> Sigma
 
     -- field accessor functions
     value {A: Any} {P: A → Prop}: Sigma P → A := case
-        λ (sigma x _) := x
+        λ record [x, _] := x
 
     proof {A: Any} (P: A → Prop}: all (s:Sigma P) → P (value s) := case
-        λ (sigma _ p) := p
+        λ record [_, p] := p
 
 
 

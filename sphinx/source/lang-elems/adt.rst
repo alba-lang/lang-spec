@@ -5,11 +5,10 @@ Abstract Data Types
 ************************************************************
 
 
-Abstract data types are a special kind of :ref:`records <Records>` with a
-carrier type ::
+Abstract data types are a special kind of :ref:`records <Records>` ::
 
     abstract class
-        Monoid (A: Any)         -- 'A' is carrier type
+        Monoid (A: Any)         -- 'A' is the carrier type
     :=
         {unit: A}
         {(+): A -> A -> A}
