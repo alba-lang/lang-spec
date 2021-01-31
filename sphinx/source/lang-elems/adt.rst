@@ -28,7 +28,7 @@ Declaring a record with a carrier type as an abstract type has the advantage to
 declare nameless instantiation of the objects ::
 
     _: Monoid ℕ :=
-        record (ℕ.zeroLeftNeutral, ℕ.zeroRightNeutral, ℕ.plusAssociative)
+        record [ℕ.zeroLeftNeutral, ℕ.zeroRightNeutral, ℕ.plusAssociative]
 
 Arguments of an abstract type like ``Monoid A`` can be made implicit in
 functions. The compiler finds the corresponding instantiation or reports an
@@ -37,3 +37,24 @@ error, if no instantiation is available for the actual carrier.
 Rule:
     At most one instance can be defined of a specific carrier of an abstract
     type.
+
+
+
+Example: Monad with its ``Maybe`` instance ::
+
+    abstract class
+        Monad (M: Any → Any)
+    :=
+        (return: all {A}: A → M A)
+        ((>>=):  all {A B}: M A → (A → M B) → M B)
+
+    _: Monad Maybe :=
+        record [
+            λ {A}: A → Maybe A := just
+            ,
+            λ {A B}: Maybe A →  (A → Maybe B) → Maybe B := case
+                λ nothing _ :=
+                    nothing
+                λ (just a) f :=
+                    f a
+        ]
