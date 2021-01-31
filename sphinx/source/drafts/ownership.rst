@@ -1,6 +1,40 @@
-**************
+******************************************************
 Ownership
-**************
+******************************************************
+
+
+Basics
+==================================================
+
+The basic idea has been developed in the Rust programming language.
+
+Three kinds of types:
+
+Normal:
+    Objects of normal types can be used arbitrarily often and can be shared.
+    The livetime of objects of normal types are potentially infinite. In order
+    to clean up objects which are no longer in use, a reference count is needed.
+
+    Passing a normal object as an argument to a function increases the reference
+    count. The reference count of a normal object created within a function is
+    decreased at the end of the function.
+
+    As soon as the reference count reaches zero, the memory of the object can be
+    deallocated.
+
+Resources:
+    Objects of a resource type are always owned by exactly one
+    variable/reference. They can be used only once and have to be used exactly
+    once. After usage they are no longer usable.
+
+Shared references:
+    A shared reference to a resource can be shared arbitrarily. However the
+    shared reference to a resource cannot live longer than the resource.
+
+    A shared reference to a normal object does not increase the reference count
+    of the object. However the shared reference must not live longer than the
+    normal object to which it refers.
+
 
 
 Linear Types
