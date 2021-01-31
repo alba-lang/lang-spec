@@ -25,6 +25,7 @@ Alphabetic list:
     :maxdepth: 1
 
     adt
+    do-notation
     functions
     inductive
     implicit
