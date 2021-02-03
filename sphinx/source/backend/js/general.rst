@@ -1,18 +1,13 @@
-.. _Javascript:
-
-****************************************
-Javascript
-****************************************
-
-
-.. highlight:: javascript
-
-
+************************************************************
 General
-============================================================
+************************************************************
+
+
+
+
 
 Names
---------------------------------------------------
+==================================================
 
 The names used in the source language might interfere with the javascript
 keywords and operators. Since javascript does not allow to define functions with
@@ -33,7 +28,7 @@ Javascript allows identifiers to begin with ``_`` and to contain ``$``. Dots
 
 
 Strings and Characters
---------------------------------------------------
+==================================================
 
 The elements of javascript strings are 16 bit unsigned integer values. Each
 element is treated as a UTF-16 code unit value.
@@ -57,7 +52,7 @@ corresponding unicode code point.
 
 
 Algebraic Types
---------------------------------------------------
+==================================================
 
 Objects of algebraic types can be implemeneted by arrays. For each constructor
 we use an :math:`n+1`\ ary array where :math:`n` is the number of runtime
@@ -79,7 +74,7 @@ E.g. to encode a list we use::
 
 
 Pattern Match
---------------------------------------------------
+==================================================
 
 The most straightforward way is to use a ``switch/case`` expression.
 
@@ -122,7 +117,7 @@ Example: List append and reverse
 
 
 Tail Recursion
---------------------------------------------------
+==================================================
 
 The javascript engines in the browser and node cannot handle deep recursion
 well. Therefore compiling recursive Alba functions to recursive javascript
@@ -266,7 +261,7 @@ final result of the function can be returned.
 
 
 Mutual Tail Recursion
---------------------------------------------------
+==================================================
 
 The translation to a loop works in the case of mutually recursive functions as
 well as long as the mutually recursive calls are tail calls.
@@ -321,7 +316,7 @@ The compiler generates the following javascript functions::
 
 
 Eliminate Recursion
---------------------------------------------------
+==================================================
 
 Stack size is limited in javascript, heapsize is limited just by the available
 memory in the javascript engine.
@@ -502,14 +497,3 @@ An example with vectors:
                 k []
             λ (x :: xs) (y :: ys) k :=
                 zipCPS xs ys (λ r := k ((x,y) :: r))
-
-
-
-
-
-Browser
-============================================================
-
-
-Node
-============================================================

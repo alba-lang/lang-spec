@@ -5,6 +5,6 @@ Backends
 
 .. toctree::
 
-    javascript
+    js/index
     rust
     llvm
