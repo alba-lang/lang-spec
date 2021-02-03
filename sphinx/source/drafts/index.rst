@@ -9,3 +9,5 @@ Drafts
     llpi
     effects
     ownership
+    node
+    browser
