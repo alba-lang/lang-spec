@@ -2,6 +2,31 @@
 Node
 ************************************************************
 
+Modules
+============================================================
+
+The *node* way of handling modules:
+
+.. code-block:: javascript
+
+    /* module file 'm.js' */
+
+    function f (x,y) {return x + y}
+
+    exports.add = f
+
+    // using 'm.js'
+    const m = require('./m')
+
+    const sum = m.add(3,4)
+
+
+However *nodejs*  supports ecma script modules as well.
+
+
+
+
+
 
 Simple Http Server
 ============================================================
