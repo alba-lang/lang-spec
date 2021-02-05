@@ -173,3 +173,60 @@ Need ``history``, ``popstate``, ``window.location``.
 .. note::
 
     Subscription to events missing (timers etc.)
+
+
+
+
+
+Handling of Subscriptions
+============================================================
+
+We can subscribe to various events which can happen in the system. The events
+produced by the user doing something in the dom tree are already handled by
+eventhandler attached to dom elements (dom elements are event targets).
+
+The application might be interested to timer events (one shot timers or interval
+timers). Navigation commands (back/forward button).
+
+Events:
+
+- Message from javascript
+- Timer (one shot or interval)
+- Keyboard (keypress, keyup, keydown)
+- Mouse
+- Window resize, visibility change
+- Animation frame
+
+
+How to handle subscriptions.
+
+The elm way: The model determines all subscriptions. Any update of the model
+might change the subscriptions. Each update requires to diff the subscriptions
+and the previous subscriptions. This is like changes in the virtual dom. However
+virtual dom changes have to be analyzed only at each animation frame.
+
+Usually an application has only a couple of subscriptions. Therefore a check of
+subscriptions each model update is not very bad.
+
+However subscriptions change only rarely (or never). Therefore it is waste of
+time diffing the subscriptions each model update.
+
+Another way: Use commands to add subscriptions. This is the most performance
+efficient method, because adding of event handlers only happens, when the state
+of the model requires it. Disadvantage: How to cancel subscriptions? How to
+update subscriptions? Possible solution: For each event type there can be only
+one handler (for interval timers one for each interval). Creating a subscription
+overwrites the previous subscription. Cancellation of event handlers is not
+ambiguous, because there is at most one handler per event type.
+
+An one shot timer is not a subscription. It is a command. At expiry it sends the
+message to the application. If we want to be able to cancel a one shot timer, we
+have to provide a timer number at creation time. Then cancellation can be done
+with the timer number. I.e. we can handle it the same way as the other
+subscriptions. At most one handler can be registered for a certain timer number.
+Creation of the next one shot timer with the same timer number removes the old
+handler.
+
+Restriction in the other way: There is at most one handler and one message
+associated with each subscription. In the elm way we could have zero or more
+subscriptions to the same event.
