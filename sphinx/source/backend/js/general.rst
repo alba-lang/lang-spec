@@ -497,3 +497,29 @@ An example with vectors:
                 k []
             λ (x :: xs) (y :: ys) k :=
                 zipCPS xs ys (λ r := k ((x,y) :: r))
+
+
+
+
+Javascript Values
+============================================================
+
+The application has to be able to decode and encode javascript objects. I.e. in
+the alba application there is an builtin type ``JSObject`` and there are builtin functions to encode and decode javascript objects.
+
+Decoder api ::
+
+    -- General
+    Decoder: Any → Any
+    decode {A}: JSValue → Decoder A → Result String A
+    return {A}: A → Decoder A
+    (>>=) {A B}: Decoder A → (A → Decoder B) → Decoder B
+
+    -- Primitives
+    string: Decoder String
+    bool:   Decoder Bool
+    int:    Decoder Int
+    float:  Decoder Float
+    list {A}:     Decoder (List A)
+    field {A}:    String → Decoder A → Decoder A
+    nullable {A}: Decoder A → Decoder (Maybe A)
