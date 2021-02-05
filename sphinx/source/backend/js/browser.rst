@@ -124,3 +124,84 @@ History
 
     history.pushState(state, title, url)        // no page load
     history.replaceState(state, title, url)     // no page load
+
+
+
+
+Alba Browser Application
+============================================================
+
+A compiled alba browser application is a javascript module with two exported
+functions:
+
+- init
+
+    - element: The element below which the view shall be displayed
+    - data: javascript object which the application can decode to get its init
+      data
+    - callback: To receive messages from the application
+    - history access flag: Application is allowed to access the history and
+      subscribe to popstate
+
+- postMessage: A method to send messages to the application
+
+The init method can throw an exception
+
+- No element given or the element does not belong to the document.
+
+- The application type is *document* or *application* and the element is not
+  body. Reason: Only *sandbox*  and *element* can work below the body.
+  *document* and *application* must takeover the body, i.e. must have exclusive
+  rights on the page.
+
+On success the init method does the following steps:
+
+- Calls the internal init function with the data object to get the initial state
+  and the initial commands.
+
+  If the application type is *application* then call the internal init function
+  with the url and an opaque navigation key. This is the method to allow the
+  application to use navigation functions.
+
+- Registers a requestAnimationFrame to display views of the state. The state
+  object has a *modified* flag which is initially *true* and set to true on each
+  update. The animation callback resets the *modified* flag after displaying the
+  state.
+
+The generated javascript module looks like
+
+.. code-block:: javascript
+
+    const application = {
+        type: 'application'
+        , init: function (data, key, url) { ... }
+        , view: function (model) { ... }
+        , update: function (msg, model) { ... }
+        , onUrlRequest: function (urlreq) { ... }
+    }
+
+    var state                   // initialized by 'init'
+
+    var element
+
+    var callback = null         // initialized by 'init' or null
+
+    function decode_message (m) { ... }
+
+    function find_element (e) { ... }
+
+    function do_command (cmd) { ... }
+
+    export function init (conf) { ... }
+
+    export function postMessage (m) {
+        var m = decode_message(m)
+        if (m === undefined) {
+            return false
+        } else {
+            var res = application.update(m, state)
+            state = res[0]
+            cmd = res[1]
+            do_command (cmd)
+        }
+    }
