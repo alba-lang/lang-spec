@@ -100,6 +100,11 @@ General form of a uri:
 
         http://www.example.com:8080/bla/blue?name=bla&color=blue#chapter1
 
+        https://example.com:8042/over/there?name=ferret#nose
+        \___/   \______________/\_________/ \_________/ \__/
+          |            |            |            |        |
+        scheme     authority       path        query   fragment
+
 
 The location object has properties and methods.
 
@@ -395,3 +400,76 @@ and a function to map the result into a message. ::
     Command (Message: Any): Any
 
     attempt{E A M}: Task E A → (Result E A → M) → Command M
+
+    none {A}: Command A
+    batch {A}: List (Command A) → Command A
+
+
+
+
+
+
+Subscriptions
+============================================================
+
+
+An alba web application has initial subscriptions which are valid during the
+lifetime of the application and dynamic subscriptions which can change after
+each update.
+
+A subscription is basically a function to generate a message from some input
+data. The provided data depend on the type of the subscription. For timer events
+it is the current time. For event listeners it is the event which needs a
+decoder to decode it into a message.
+
+Some events to subscribe to:
+
+- Message from javascript
+- Timer (interval)
+- Keyboard (keypress, keyup, keydown)
+- Mouse
+- Window resize, visibility change
+- Animation frame
+
+A subscription returns a message which is dispatched to the application.
+Therefore like commands, subscriptions are parametrized by the message type.
+Some examples ::
+
+    onAnimationFrame {M}: (Time → M) → Subscription M
+
+    onKeyPress {M}: Decoder M → Subscription M
+
+    onClick {M}: Decoder M → Subscription M
+
+    onResize {M}: (Int → Int → M) → Subscription M
+
+    every {M}: Float → (Time → M) → Subscription M
+
+Generics::
+
+    Subscription: Any → Any
+
+    none {A}: Subscription A
+    batch {A}: List (Subscription A) → Subscription A
+
+    map {A B}: (A → B) → Subscription A → Subscription B
+
+A subscription is attached to an event target or it is a timer subscription or
+an animation subscription. For each subscription type we need a structure which
+stores the initial subscriptions and the dynamic subscriptions. The runtime has
+one listener for each subscription type. If an event arrives at the listener, a
+message is created for each subscription and the message is dispatched to the
+application via *update*.
+
+It is possible that the runtime never removes listeners. If the listener has no
+subscriptions then it just does nothing. But it is also possible to remove the
+listener if there are no subscribers for the event.
+
+The subscription handling is like the vdom handling. After each update the new
+dynamic subscriptions have to be compared against the old dynamic subscriptions
+and the subscriptions have to be updated correspondingly.
+
+There might be many subscribers for the same event. First all subscribers will
+be notified by generating a message and dispatching the message via *update*.
+Only the subscriptions reveiced after the last update are used to update the
+dynamic subscriptions.
