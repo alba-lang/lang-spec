@@ -3,7 +3,18 @@ General
 ************************************************************
 
 
+Primitives
+==================================================
 
+Javascript has the following primitives:
+
+- undefined
+- null
+- boolean
+- number
+- string
+
+Primitive values are immutable.
 
 
 Names
