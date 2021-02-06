@@ -74,6 +74,8 @@ value. Both are strings.
 
         element.setAttribute(name, value)
         element.getAttribute(name)          // null or "" if not present
+        element.focus()
+        element.blur()
 
 Like all objects in javascript, elements can have arbitrary properties. A
 ``setAttribute`` sets the property of the same name. Updating a property does
@@ -341,3 +343,55 @@ Update the handlers:
     We have to remove all old handlers and add the new ones. This is neccessary,
     because it is not possible to compare handler for equality (they are
     functions).
+
+
+
+Commands and Tasks
+============================================================
+
+A task is a unit of an effect. It has the alba api ::
+
+    -- Builtin
+    Task (Error A: Any): Any
+
+    succeed {E A}: A → Task E A
+    fail    {E A}: E → Task E A
+    (>>=) {E A B}: Task E A → (A → Task E B) → Task E B
+    catch {E A}:   Task E A → (E → Task E A) → Task E A
+    mapError {E₁ E₂ A}: (E₁ → E₂) → Task E₁ A → Task E₂ A
+
+    -- Based on builtins
+    map {E A B}: (A → B) → Task E A → Task E B :=
+        \ f t := do
+            a := t
+            succeed (f a)
+
+    sequence {E A}: List (Task E A) → Task E (List A) := case
+        λ [] :=
+            succeed []
+        λ (h :: t) := do
+            x  := h
+            xs := sequence t
+            succeed (x :: xs)
+
+
+I.e. tasks can be chained. Tasks perform some actions or fail. A task that can
+never fail has the type ``Task Void A``.
+
+There are builtin tasks:
+
+- Sleep for a certain time
+- Random number generation
+- Http requests
+- log a string to the console
+- Read the clock
+- Dom actions like *focus*, *blur*, *getViewport*, *setViewport*, ...
+
+
+Commands can be generated from tasks. Any command will at the end of the task
+generate some message to the application. I.e. a command is based on a command
+and a function to map the result into a message. ::
+
+    Command (Message: Any): Any
+
+    attempt{E A M}: Task E A → (Result E A → M) → Command M
