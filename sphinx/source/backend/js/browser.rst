@@ -2,9 +2,12 @@
 Browser
 ************************************************************
 
+Javascript API
+============================================================
+
 
 Window
-============================================================
+------------------------------------------------------------
 
 A browser window is represented by a window object. The window object is an
 event target which receives events like ``load``, ``resize``, ``popstate``.
@@ -20,7 +23,7 @@ the methods ``addEventListener``, ``removeEventListener`` and ``dispatchEvent``.
 
 
 Document
-============================================================
+------------------------------------------------------------
 
 A document represents the web page loaded into the browser. A documents consists
 of elements, text nodes and nodes.
@@ -84,7 +87,7 @@ Like all objects in javascript, elements can have arbitrary properties. A
 
 
 Location
-============================================================
+------------------------------------------------------------
 
 General form of a uri:
 
@@ -121,7 +124,7 @@ The location object has properties and methods.
 
 
 History
-============================================================
+------------------------------------------------------------
 
 .. code-block:: javascript
 
@@ -131,6 +134,10 @@ History
 
     history.pushState(state, title, url)        // no page load
     history.replaceState(state, title, url)     // no page load
+
+
+
+
 
 
 
@@ -348,6 +355,24 @@ Update the handlers:
     We have to remove all old handlers and add the new ones. This is neccessary,
     because it is not possible to compare handler for equality (they are
     functions).
+
+
+Update the document:
+    Each element has a tag. If the tag of the new element is different from the
+    tag of the old element then we have to create a new element. In case of a
+    text node we create a new node if the text content is different.
+
+    If the tags are the same, we update style, attributes, properties and
+    handlers.
+
+    Then we update the children recursively.
+
+    There is a special case when the children have keys. Then the new children
+    might be just a reordering of the old children. No longer existing children
+    have to be removed. New children have to be generated. Existing children
+    have to be update, if they have the same tag, or newly generated, if they
+    have different tags.
+
 
 
 
