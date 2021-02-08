@@ -17,27 +17,75 @@ always higher precedence. If the numerical precendece is the same, the
 associativity decides. Left associativity of the first gives the first a higher
 precedence. Right associativity of the first gives the first a lower precedence.
 
-An operator expression has the form ::
-
-    a o₁ b o₂ c o₃ d o₃ ...
-
-where each operand *a*, *b*, ... can be an atomic expression prefixed by an
-arbitrary number of operators.
-
-We can generate a parse tree by the recursive algorithm
-::
-
-    parse (a o b) :=
-        (a o b)
-
-    parse (a o₁ b o₂ ...) :=
-        if o₁ > o₂ then
-            parse ((a o₁ b) o₂ ...)
-        else
-            parse (a o₁ (parse (b o₂ ...)))
-
-    MISSING: Prefix operators!!
+There are the following precedence levels from lowest to highest with some
+example operators/symbols:
 
 
-The algorithm terminates, because each parse reduces the length of the operator
-expression (and increases the depth).
++-----------------+--------------+-------------------+---------------+
+|  level          |  left        |       right       |  noassoc      |
++-----------------+--------------+-------------------+---------------+
+|  where          |              |                   |               |
++-----------------+--------------+-------------------+---------------+
+|  comma          |              |  ,                |               |
++-----------------+--------------+-------------------+---------------+
+|  assign         |              |  λ :=             |               |
++-----------------+--------------+-------------------+---------------+
+|  colon          |              |  all  :           |               |
++-----------------+--------------+-------------------+---------------+
+|  arrow          |              |  → =              |               |
++-----------------+--------------+-------------------+---------------+
+|  or             |              |  \\/ ∨ or         |               |
++-----------------+--------------+-------------------+---------------+
+|  and            |              |  /\\ ∧ and        |               |
++-----------------+--------------+-------------------+---------------+
+|  not            |              |                   | ¬ Not not     |
++-----------------+--------------+-------------------+---------------+
+|  apply          | \|>          | <\|               |               |
++-----------------+--------------+-------------------+---------------+
+|  composition    | >>           | <<                |               |
++-----------------+--------------+-------------------+---------------+
+|  relation       |              |                   |  = ≤ < ...    |
++-----------------+--------------+-------------------+---------------+
+|  add            | \+ \-        |                   |               |
++-----------------+--------------+-------------------+---------------+
+|  mult           | \* / mod     |                   |               |
++-----------------+--------------+-------------------+---------------+
+|  exp            |              | ^                 |               |
++-----------------+--------------+-------------------+---------------+
+|  application    |  f a b c ..  |                   |               |
++-----------------+--------------+-------------------+---------------+
+
+
+Some examples of expressions and the corresponding parsing::
+
+    expression                          parsed as
+
+    a + b + c                           (a + b) + c
+
+    - a + b                             (- a) + b
+
+    - a * b                             - (a * b)
+
+    x |> f |> g                         (x |> f) |> g
+
+    f <| g <| x                         f <| (g <| x)
+
+    x |> f <| y                         (x |> f) <| y
+
+    x |> f >> g                         x |> (f >> g)
+
+    a :: b :: c                         a :: (b :: c)
+
+    A : B : C                           A : ( B : C)
+
+    λ x := a, b                         (λ x := a), b
+    --                                  comma < assign
+
+    λ x := a : T                        λ x := (a: T)
+    --                                  assign < colon
+
+    all x: T, e                         (all x: T), e
+    --                                  comma < colon
+
+    all y: T → U                        all y: (T → U)
+    --                                  colon < arrow
