@@ -40,7 +40,6 @@ Alphabetic list:
     projects
     record
     section
-    source-file
     style
     telescope
     types
