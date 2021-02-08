@@ -35,6 +35,7 @@ Alphabetic list:
     modules
     packages
     pattern-match
+    precedence
     projects
     record
     section
