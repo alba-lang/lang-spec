@@ -4,25 +4,35 @@
 Do Notation
 ************************************************************
 
+Do notation can be used as a syntactic sugar for all types or type formers (i.e.
+type constructors) ``M`` with a bind operation named ``>>=`` of the following
+form::
 
-Do notation is valid for type formers ``M`` (i.e. functions of type ``Any →
-Any``) having two functions name ``return`` and ``(>>=)`` with the signatures ::
+    (>=): all {A B C ...: Any):  M ... → (X → M C D ...) → M C D ...
+    --                                        ^^^^^^^^^    ^^^^^^^^^
+    --                                              same type!
 
-    return: all {A: Any}: A → M A
+Usually ``M`` is a type former and the bind operation looks like ::
 
     (>>=):  all {A B: Any}: M A → (A → M B) → M B   -- bind operation
 
+    -- Examples:
+    (>>=): Int → (String → Int) → Int               -- silly, but possible
+
+    (>>=) {A B}: List A → (A → List B) → List B     -- usual list monadic bind
+
+    (>>=) {A B}: Maybe A → (A → Maybe B) → Maybe B  -- usual maybe monadic bind
 
 
-Do notation is meant to make expressions like the following more readable.
+Do notation is meant to make expressions like the following more readable:
 ::
 
     e₀
     >>=
-    (λ (x₁: M A) :=
+    (λ (x₁: A) :=
         e₁              -- expression of type 'M B'
         >>=
-        (λ (x₂: M B) :=
+        (λ (x₂: B) :=
             e₂          -- expression of type 'M C'
             >>=
             (λ _ :=
