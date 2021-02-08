@@ -136,10 +136,9 @@ The following are keyword operators:
 
 .. code-block::
 
-    and And (∧)
-    in (∈)
+    and
     not Not (¬)
-    or Or (∨)
+    or
 
 
 An operator symbol is one of:
@@ -319,9 +318,9 @@ only the following are valid UTF-8 code points within source code.
 +--------+------------+------------------+
 | ⊨      | U+22A8     | ``|=``           |
 +--------+------------+------------------+
-| ∧      | U+2227     | ``And``          |
+| ∧      | U+2227     | /\\              |
 +--------+------------+------------------+
-| ∨      | U+2228     | ``Or``           |
+| ∨      | U+2228     | \\/              |
 +--------+------------+------------------+
 | ¬      | U+00ac     | ``Not``          |
 +--------+------------+------------------+
@@ -339,11 +338,14 @@ only the following are valid UTF-8 code points within source code.
 UTF-8 Encoding
 ========================================
 
-
+A unicode code point in UTF-8 encoding consists of one or more bytes. The first
+byte encodes how many continuation bytes are following to encode the code point.
+**Rule**: In order to encode a unicode code point in UTF-8 the byte sequence
+must have minimal length.
 
 .. code-block:: none
 
-    First bytes in a unicode byte sequence
+    First byte in a unicode byte sequence
 
     0xxxxxxx                1 byte sequence i.e. ascii character
     110xxxxx                2 byte sequence
