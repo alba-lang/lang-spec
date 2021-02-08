@@ -135,3 +135,15 @@ Example::
 With mutally recursive functions there is the same rule that each of the
 mutually recursive functions must have one index argument which is structurally
 decreasing on each call of one of the mutually recursive functions.
+
+The function ``flipChildren`` is not very runtime efficient. A more efficient
+version::
+
+    flipChildren (forest: List (Tree A)): List (Tree A) :=
+        prependFlipped forest []
+        where
+            prependFlipped := case
+                \ [] accu :=
+                    accu
+                \ (t :: f) accu :=
+                    prependFlipped f (flipTree t :: accu)
