@@ -33,6 +33,7 @@ Alphabetic list:
     lexical
     local-defs
     modules
+    namespaces
     packages
     pattern-match
     precedence
