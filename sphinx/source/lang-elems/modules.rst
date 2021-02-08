@@ -70,6 +70,10 @@ module does not know, that the type is an inductive type and cannot pattern
 match on objects of that type.
 
 
+
+Interface and Implementation File
+--------------------------------------------------
+
 The implementation file of a module must implement all types, constants and
 functions declared in its interface file. If the interface file defines
 everything completely, then the implementation file is not necessary.
