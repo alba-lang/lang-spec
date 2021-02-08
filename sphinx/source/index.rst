@@ -19,13 +19,12 @@ Welcome to Alba's documentation!
     intermediate/index
     backend/index
     bibliography
-    drafts/index
 
 
 
+..
+    Indices and tables
+    ==================
 
-Indices and tables
-==================
-
-* :ref:`genindex`
-* :ref:`search`
+    * :ref:`genindex`
+    * :ref:`search`
