@@ -26,7 +26,7 @@ Numbers in javascript are 64 bit floating point numbers according to IEEE 754.
 
 
 Floating Point
-------------------------------------------------------------
+============================================================
 
 IEEE 754 floating point values have some peculiarities which has to be corrected
 to fit into the alba semantics. In alba
@@ -72,7 +72,7 @@ A reasonable correction of the IEEE semantics:
 
 
 Integer 32 Bit Arithmetic
-------------------------------------------------------------
+============================================================
 
 Javascript treats numbers as 64 bit floating point numbers by default. 64 bit
 floating point numbers can safely represent integer numbers *n* only if
@@ -120,13 +120,19 @@ the biggest signed 32 bit number.
 
 
 Big Numbers (BigInt)
-------------------------------------------------------------
+============================================================
 
 
+Javascript has ``BigInt``. Objects of that type implement arbitrarily sized
+whole numbers. BigInt literals are just numbers with the suffix *n* (e.g.
+``100n, 0n, -1n``.
 
+All modern browsers and nodejs support BigInts.
 
-
-
+BigInts can be used directly to implement the type ``Integer``. They can be used
+to implement ``Natural`` as well with the exception of substraction. When
+substraction of two natural numbers results in a negative number, the result has
+to be replaced by zero.
 
 
 
@@ -138,14 +144,63 @@ keywords and operators. Since javascript does not allow to define functions with
 an operator name, operators of the source language have to be represented by
 valid javascript identifiers.
 
-
-
-**DETAILS MISSING!!**
-
-Draft:
-
 Javascript allows identifiers to begin with ``_`` and to contain ``$``. Dots
 ``.`` are not allowed.
+
+The following encodings are used:
+
+- ``add`` ~>  ``_add``
+
+- ``+`` ~> ``o_2B`` where ``2B`` is the hexadecimal encoding of the ascii
+  character ``+``.
+
+- Nameless variables (only local variables): The backend can invent numbers and
+  encode them as ``i_24``. Note that the numbers must be de Bruijn levels and
+  not indices in order to be unique.
+
+
+Modules, Packages, ...
+============================================================
+
+The compiler has to generate an object containing all used functions/constants
+used within the program. Each namespace gets its own object.
+
+For the namespace ``prelude`` we get the object:
+
+.. code-block:: javascript
+
+    function make_prelude () {
+        function make_Integer () {
+            let _add = (_a, _b) => _a + _b
+            let _minus = (_a, _b) => _a + _b
+            let _le = (_a, _b) => _a <= _b
+            return {_add: _add, _minus: _minus, _le: _le}
+        }
+
+        function make_Int (_Integer) {
+            let add = (_a, _b) => (_a + _b)|0;
+            let minus = (_a, _b) => (_a - _b)|0;
+            let le = (_a, _b) => _a <= _b
+            return {_add: _add, _minus: _minus, _le: _le}
+        }
+
+        function make_UInt () {
+            let add = (_a, _b) => (_a + _b)|0;
+            let minus = (_a, _b) => (_a - _b)|0;
+            let le = (_a, _b) => _add(_a,0x8000_0000) <= _add(_b,0x8000_0000);
+            return {_add: _add, _minus: _minus, _le: _le}
+        }
+
+        let _Integer = make_Integer ()
+        let _Int = make_Int(_Integer)
+        let _UInt = make_UInt ()
+
+        return {_Integer: _Integer, _Int: _Int, _UInt: _UInt}
+    }
+
+A namespace using another namespace get in its *make* function a reference to
+the used namespace.
+
 
 
 

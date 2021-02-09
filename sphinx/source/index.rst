@@ -8,7 +8,7 @@ Welcome to Alba's documentation!
 ==================================
 
 .. toctree::
-    :maxdepth: 2
+    :maxdepth: 3
     :numbered:
     :caption: Contents:
 
