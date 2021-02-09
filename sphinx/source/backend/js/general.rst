@@ -17,6 +17,78 @@ Javascript has the following primitives:
 Primitive values are immutable.
 
 
+
+Arithmetic
+============================================================
+
+Numbers in javascript are 64 bit floating point numbers according to IEEE 754.
+
+
+
+Floating Point
+------------------------------------------------------------
+
+IEEE 754 floating point values have some peculiarities which has to be corrected
+to fit into the alba semantics. In alba
+
+- equality is reflexive, but in IEEE ``! (NaN === NaN)`` and ``! (NaN == NaN)``
+
+- equality is leibniz equality, but in IEEE ``- 0 == 0`` and ``- 0 === 0``, but
+  ``1/0 ~> Infinity`` and ``1/(-0) ~> - Infinity``
+
+Therefore we have to implement the equality function on floating point values by
+hand and not use the javascript ``==`` or ``===``.
+
+.. code-block:: javascript
+
+    function float_equal (a,b) {
+        Object.is(a,b)
+    }
+
+IEEE floating point values have no linear order because of NaN. NaN is neither
+smaller nor greater than any other floating point value. Javascript returns
+false in comparing any number with NaN. Unfortunately ``NaN <= NaN`` returns
+false as well, which violates reflexivity of equality.
+
+Without NaN, the floating point values have a linear order. However with -0 and
++0 the javascript implementation returns false on the question ``-0 < 0`` and
+true on ``-0 <= 0``. This violates antisymmetry of a partial order, because ``-0
+<= 0`` and ``0 <= -0`` implies ``-0 = 0``.
+
+A reasonable correction of the IEEE semantics:
+
+.. code-block:: javascript
+
+    function float_less_equal (a,b) {
+        return (
+            a <= b          // returns false if a or b is NaN
+            &&
+            ! (Object.is(a,0) && Object.is(b, -0))
+            // 0 <= -0 shall return false
+        )
+    }
+
+
+
+
+Integer 32 Bit Arithmetic
+------------------------------------------------------------
+
+
+
+
+
+Big Numbers (BigInt)
+------------------------------------------------------------
+
+
+
+
+
+
+
+
+
 Names
 ==================================================
 
