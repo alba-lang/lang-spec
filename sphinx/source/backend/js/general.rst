@@ -74,6 +74,47 @@ A reasonable correction of the IEEE semantics:
 Integer 32 Bit Arithmetic
 ------------------------------------------------------------
 
+Javascript treats numbers as 64 bit floating point numbers by default. 64 bit
+floating point numbers can safely represent integer numbers *n* only if
+:math:`2^{53} < n < 2^{53}`.
+
+.. code-block:: javascript
+
+    Number.MAX_SAFE_INTEGER == Math.pox(2,31) - 1  // 9_007_199_254_740_991
+    Number.MIN_SAFE_INTEGER == - Number.MAX_SAFE_INTEGER
+
+Overflow is not handled correctly in the sense of modulo arithmetic. Adding 1 to
+the maximal safe integer returns the same value.
+
+A number *x* can be converted to a 32 bit integer value by ``x|0``. In order to
+get 32 bit modulo arithmetic with addition and substraction it is necessary to
+add the conversion ``|0`` after each addition and substraction.
+
+Standard multiplication can overflow cause an overflow into floating point
+numbers because multiplying two 32 bit values can result in values below
+:math:`2^{53}` or above :math:`2^{53}`. In order to do integer modulo
+multiplication correctly in javascript there is the function ``Math.imul(a,b)``.
+
+Division cannot overflow, but produces a fractional number represented as a
+floating point number. Converting back to modulo arithmetic is done by ``(a / b)
+| 0``.  The same applies to the modulo operation ``(a % b) | 0``.
+
+Mathematically there is no difference between signed and unsigned modulo
+arithmetic. Therefore it is possible to represent unsigned 32 bit values as
+signed 32 bit values. What is different is the order relation. We can map the
+unsigned order relation to the signed order relation by adding the smallest
+signed number ``0x8000_0000`` (which is :math:`- 2^{31}`) to both operands and
+then do the signed comparison. With that *0* is mapped to :math:`- 2^{31}` i.e.
+the smallest signed 32 bit number and *-1*  is mapped to :math:`2^{31} - 1` i.e.
+the biggest signed 32 bit number.
+
+.. code-block:: javascript
+
+    // unsigned comparison a <= b
+    ((a + 0x80000000)|0) <= ((b + 0x80000000)|0)
+
+
+
 
 
 
