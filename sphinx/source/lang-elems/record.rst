@@ -22,8 +22,8 @@ General form of a record definition::
     record
         Name <params>: Sort     -- The optional sort is 'Prop' or 'Any'
     :=                          -- If ommitted 'Any' is used.
-        (field₁: Type₁)
-        (field₂: Type₂)
+        field₁: Type₁
+        field₂: Type₂
         ...
 
     -- equivalent inductive type
@@ -49,9 +49,9 @@ E.g. the declaration
 ::
 
     record Person :=
-        (firstName: String)
-        (lastName: String)
-        (age: Int)
+        firstName: String
+        lastName: String
+        age: Int
 
 defines the algebraic type
 ::
@@ -123,8 +123,8 @@ used as pattern.
 E.g. with the record ::
 
     record Refine {A: Any} (P: A → Prop) :=
-        (value: A)
-        (proof: P value)
+        value: A
+        proof: P value
 
 we can pattern match
 ::
@@ -146,8 +146,8 @@ Records can have dependent types
 ::
 
     record Sigma {A: Any} (P: A → Prop) :=
-        (value: A)
-        (proof: P value)
+        value: A
+        proof: P value
 
     -- corresponding inductive type
     class Sigma {A: Any} (P: A -> Prop) :=
