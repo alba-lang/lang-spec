@@ -61,6 +61,88 @@ processed by the underlying resource.
 
 
 
+
+
+
+Alba Stream API
+============================================================
+
+Writable stream:
+
+::
+
+    record IOR (A: Any) := io: IO (Result Error A)
+
+    write: Buffer -> Writable -> IOR Bool
+        -- Write a buffer to the writable stream. Get an error or a bool
+        -- indicating, if more writes are possible or better wait for drain.
+
+    writeEnd: Buffer -> (Unit -> IOR A) -> Writeable -> IOR A
+        -- Write a buffer as the last input to the stream. Wait for the finish
+        -- event, then call the action.
+
+    drain {A}: (Unit -> IOR A) -> Writable -> IOR A
+        -- Wait for the drain event. Then execute the action.
+
+
+Readable stream:
+
+::
+
+    read: Readable -> IOR (Maybe Buffer)
+        -- Try to read bytes into a buffer and return the buffer.
+        -- Return 'nothing' if the readable stream has ended.
+        -- Closing a resource (file descriptor, connection) before ending the
+        -- stream is considered as a error.
+
+
+
+Result within the io monad
+============================================================
+
+The result monad::
+
+    class Result (E A: Any) :=
+        ok:    A -> Result
+        error: E -> Result
+
+    Result.return {E A}: A -> Result E A
+        := ok
+
+    Result.(>>=) {E A}: Result E A -> (f: A -> Result E B) -> Result E B
+    := case
+        \ (ok a)    f   :=  f a
+        \ (error e) _   :=  error e
+
+::
+
+    record IOR (A: Any) :=          -- zero cost abstraction
+        io: IO (Result Error A)     -- record with one field
+
+    IOR.return {A} (a: A): IOR A :=
+        record [ IO.return <| ok a ]
+
+    IOR.error {A} (e: Error): IOR A :=
+        record [ IO.return <| error e ]
+
+    IOR.(>>=) {A B} (m: IOR A) (f: A -> IOR B): IOR B :=
+        record [
+            do
+                r := io m
+                inspect r case
+                    \ (ok a) :=
+                        io <| f a
+                    \ (error e) :=
+                        return <| error e
+        ]
+
+    IOR.catch {A} (m: IOR A) (f: Error -> IOR A): IOR A :=
+        record [ catch (io m) (io << f) ]
+
+
+
+
+
 Simple Http Server
 ============================================================
 
