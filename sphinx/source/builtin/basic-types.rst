@@ -28,7 +28,7 @@ Logical
 
     class True: Proposition  := trivial
 
-    (Not) (A: Proposition): Proposition := A → False
+    (¬) (A: Proposition): Proposition := A → False
 
     class (∧) (A B: Proposition): Proposition :=
         (,): A → B → (∧)
@@ -51,7 +51,7 @@ General
 
     class Unit := unit
 
-    class Boolean := true; false
+    class Bool := true; false
 
     class Reflect (A: Prop): Bool → Any :=
         true:  A        →   Reflect true
@@ -116,34 +116,42 @@ decision procedures are compiled to more efficient runtime representations.
 
     (=?): ℕ → ℕ → Boolean := case
         λ zero      zero        := true
-        λ (add1 n)  (add1 m)    := true
+        λ (succ n)  (succ m)    := true
         λ _         _           := false
 
     (<?): ℕ → ℕ → Boolean := case
         λ _         zero        := false
-        λ zero      (add1 _)    := true
-        λ (add1 n)  (add1 m)    := n <? m
+        λ zero      (succ _)    := true
+        λ (succ n)  (succ m)    := n <? m
 
     (+): ℕ → ℕ → ℕ := case
         λ n zero        := n
-        λ n (add1 m)    := add1 (n + m)
+        λ n (succ m)    := succ (n + m)
 
     (-): ℕ → ℕ → ℕ := case
         λ n         zero        :=  n
         λ n         (add1 _)    :=  zero
         λ (add1 n)  (add1 m)    :=  n - m
 
+    (*): ℕ → ℕ → ℕ := case
+        λ zero      m           :=  zero
+        λ (succ n)  m           :=  n * m + m
+
+    (^): ℕ → ℕ → ℕ := case
+        λ n         zero        := succ zero
+        λ n         (succ m)    := n * (n ^ m)
+
     divAux: ℕ → ℕ → ℕ → ℕ → ℕ := case
             -- n / (add1 m) = divAux 0 m n m
         λ k m   zero        j       :=  k
-        λ k m   (add1 n)    zero    :=  divAux (add1 k) m n m
-        λ k m   (add1 n)    (add1 j):=  divAux k m n j
+        λ k m   (succ n)    zero    :=  divAux (succ k) m n m
+        λ k m   (succ n)    (add1 j):=  divAux k m n j
 
     modAux: ℕ → ℕ → ℕ → ℕ → ℕ := case
             -- n % (add1 m) = modAux 0 m n m
         λ k m   zero        j       :=  k
-        λ k m   (add1 n)    zero    :=  modAux 0 m n m
-        λ k m   (add1 n)    (add1 j):=  modAux (add1 k) m n j
+        λ k m   (succ n)    zero    :=  modAux 0 m n m
+        λ k m   (succ n)    (add1 j):=  modAux (succ k) m n j
 
 
 Key idea in ``divAux`` and ``modAux``: The number ``k`` is initialized to
@@ -151,22 +159,6 @@ Key idea in ``divAux`` and ``modAux``: The number ``k`` is initialized to
 quotient or the remainder. Both are total functions have efficient runtime
 representations.
 
-
-.. note::
-    Instead of defining ``=?`` and ``<?``
-    maybe it is better to define a function ``distance n m`` with 3 results. In
-    the first case the number ``n`` is smaller than ``m`` and ``i`` is returned
-    such that ``n + i + 1 = m`` is valid. In the second case both numbers are
-    equal. And in the third case then number ``n`` is greater than the numer
-    ``m`` and ``i`` is returned such that ``n = m + i + 1`` is valid.
-
-    .. code-block::
-
-        distance: ℕ → ℕ → Tristate ℕ Unit ℕ := case
-            λ zero      (add1 i)    := left i
-            λ zero      zero        := middle unit
-            λ (add1 i)  zero        := right i
-            λ (add1 i)  (add1 j)    := distance i j
 
 
 
@@ -177,9 +169,6 @@ representations.
     class ℤ: Any :=
         positive: ℕ → ℤ
         negative1: ℕ → ℤ    -- 'negative1 n' represents '- (add1 n)'
-
-    (*): ℕ → ℕ → ℕ := ...
-    (^): ℕ → ℕ → ℕ := ...
 
     (+): ℤ → ℤ → ℤ := ...
     (*): ℤ → ℤ → ℤ := ...
@@ -206,7 +195,7 @@ Scalar Types
 Integer Types
 ----------------------------------------
 
-There are signed and unsigned integer for various bitsizes
+There are signed and unsigned integers for various bitsizes
 
 ``Byte``
     8 bit unsigned integer
@@ -214,7 +203,7 @@ There are signed and unsigned integer for various bitsizes
 ``Int32, UInt32``
     32 bit signed and unsigned integer
 
-``Character``
+``Char``
     32 bit unicode code point
 
 ``Int64, UInt64``
@@ -239,12 +228,13 @@ In the following we show the necessary definitions for ``UInt32``.
     UInt32.toℕ: UInt32 → ℕ
     UInt32.fromℕ: ℕ → UInt32        -- modulo 2^32
 
-    UInt32.embeded: ∀ n m: toℕ n = toℕ → n = m
+    UInt32.embeded: ∀ n: fromℕ (toℕ n) = n
+    UInt32.embeded: ∀ n m: toℕ n = toℕ m → n = m
 
     UInt32.(≤) (n m: UInt32): Proposition :=
         toℕ n ≤ toℕ m
 
-    UInt32.(≤?) (n m: UInt32): Decision (n ≤ m)
+    UInt32.(≤?) (n m: UInt32): Bool
 
     Unit32.bitSize: ℕ      -- bitsize is 'n + 1', cannot be zero
 
@@ -252,7 +242,7 @@ In the following we show the necessary definitions for ``UInt32``.
         fromℕ (toℕ n + toℕ m)
 
     UInt32.(-) (n m: UInt32): UInt32 :=
-        fromℕ (toℕ n + 2^(add1 bitsize)- toℕ m)
+        fromℕ (toℕ n + 2^(succ bitsize)- toℕ m)
 
     UInt32.plusProperty: ∀ (n m: UInt32):
 
@@ -279,9 +269,9 @@ integer as well. ``x >>> 0`` converts to an unsigned 32 bit integer (i.e. ``-1
 >>> 0`` is converted to ``0xff_ff_ff_ff``).
 
 Signed and unsigned integer arithmetic is the same. Only the javascript
-comparison operatos ``<=``, ``<``, ... give wrong results. Before doing the
+comparison operators ``<=``, ``<``, ... give wrong results. Before doing the
 comparisons, it is necessary to add the lowest negative number
-``0x80_00_00_00`` which is :math:`-2^{31}`. This shifts the number zero to the
+``0x8000_0000`` which is :math:`-2^{31}`. This shifts the number zero to the
 lowest negative number, i.e. all other numbers are greater or equal to this
 number.
 
