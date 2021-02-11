@@ -4,16 +4,20 @@
 Introduction
 ************************************************************
 
-
-Manifesto
+Goals of the Language
 ============================================================
 
-- Easy to use functional programming
+Alba shall be an easy to learn functional programming language. Easy to learn
+means that is easy to write simple web applications or simple console
+applications, even for newcomers to programming.
 
-- Flat learning curve: Dependent types do not appear when not needed.
+However internally alba offers all the goodies of dependent types including the
+possibility to write fully certified. Programs written in alba cannot produce
+runtime errors. All errors are compile time errors.
 
-- Web application out of the box
-
+A big challenge to reach the goal is to design the type system so that it does
+not get in the way. Furthermore it is very important to print understandable
+error messages.
 
 
 
