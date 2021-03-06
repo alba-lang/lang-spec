@@ -114,10 +114,12 @@ The location object has properties and methods.
 .. code-block:: javascript
 
     location.href
+    location.protocol
     location.hostname
     location.port
     location.pathname
-    location.protocol
+    location.search         // '?....'
+    location.hash           // '#....'
     location.assign(url)    // loads new web page
 
 
