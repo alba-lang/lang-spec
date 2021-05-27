@@ -73,8 +73,8 @@ Because of the typing rule for variable introduction::
     ------------------
     Γ, x: A ⊢ x : A
 
-we can substitute all universes except ``Any ω`` for `A`` and
-define variables which has the corresponding universes as type. E.g.::
+we can substitute all universes except ``Any ω`` for ``A`` and
+define variables which have the corresponding universes as type. E.g.::
 
     α: Prop
 
@@ -87,16 +87,16 @@ All fully elaborated polymorphic types and functions use universes and universe
 levels::
 
     class List₀ (α: Any 0): Any 0 :=
-        []      :   List
-        (::)    :   α → List → List
+        []      :   List₀
+        (::)    :   α → List₀ → List₀
 
     append {α: Any 0}: List₀ α → List₀ α → List₀ α := case
         λ []        ys  :=  ys
         λ (x :: xs) ys  :=  x :: append xs ys
 
     class List₁ (α: Any 1): Any 1 :=
-        []      :   List
-        (::)    :   α → List → List
+        []      :   List₁
+        (::)    :   α → List₁ → List₁
 
     class List {u: Level} (α: Any u): Any u :=
         []      :   List
@@ -126,7 +126,7 @@ Using ``List₁`` or ``List`` it is possible to construct a list of types::
 
     [Int, String, Bool] : List₁ (Any 0)
 
-    [Int, String, Bool] : List (Any 0)
+    [Int, String, Bool] : List {0} (Any 0)
 
     -- because of
     Int     :   Any 0
@@ -209,16 +209,33 @@ Draft
 
 
 
-Using universe levels it is possible to define heterogeneous lists::
+Using universe levels it is possible to define dependent lists::
 
     class
-        HList {u: Level} {α: Any u} (P: α → Any u): List α → Any u
+        DList {u: Level} {α: Any u} (P: α → Any u): List α → Any u
     :=
-        hnil    : HList []
-        hcons   : ∀ {x: α} {xs: List α}: P x → HList xs → Hlist (x :: xs)
+        hnil    : DList []
+        hcons   : ∀ {x: α} {xs: List α}: P x → DList xs → Dlist (x :: xs)
+
+
+Let ``α`` be ``Any 0``. This requires ``0 < u``. Then we can use ::
+
+    \ (T: Any 0): Any u := T
+
+for the predicate ``P``. This gives ``P ℕ ~~> ℕ``, ``P Bool ~~> Bool`` etc. i.e.
+``P`` is the identity function on types. In that case we can form ::
+
+    hcons 5 (hcons true hnil): DList (\ T := T) [ℕ, Bool]
+
+
+An easier to unserstand type is the type of heterogenious lists::
 
     class
-        HList {u: Level} {α: Any u} (P: α → Any u): List α → Any u
+        HList {u: Level}: List (Any u) → Any (u + 1)
     :=
-        hnil    : HList []
-        hcons   : ∀ {x: α} {xs: List α}: P x → HList xs → Hlist (x :: xs)
+        []:   HList []
+        (::): ∀ {T: Any u} {Ts: List (Any u)}: T → HList Ts → Hlist (T :: Ts)
+
+Having this we can form ::
+
+    [1, true]: HList [ℕ, Bool]

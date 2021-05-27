@@ -210,7 +210,7 @@ declared in the following form ::
 
 Rules:
 
-- The constructors of in the types must construct an object of the corresponding
+- The constructors of the types must construct an object of the corresponding
   type.
 
 - In the constructor argument types the mutually defined types can occur, but
@@ -290,7 +290,7 @@ Nested Inductive Types
 ============================================================
 
 
-We can use an already existing inductive type use it nestedly within a new
+We can use an already existing inductive type nestedly within a new
 inductive type. A simple example is a tree whose children (aka forest) are
 implemented as a list of trees.
 
@@ -383,7 +383,7 @@ Why Positivity?
 ============================================================
 
 In the chapter `General Inductive Types`_ there have been given an example of
-what can go wrong, if positivity is violated -- an function with infinite
+what can go wrong, if positivity is violated -- a function with infinite
 recursion. In this section we are going to show that positivity guarantees
 absence of endless loop or guarantees strong normalization.
 
@@ -425,7 +425,7 @@ in order to construct the terms ::
 
     node (node (node empty 'a' empty) 'b'  (node empty 'c' empty))
 
-Since constructor look like functions (or constants) without a definition, such
+Since constructors look like functions (or constants) without a definition, such
 a term has no meaning. We can give the term a meaning if we define a way how to
 evaluate the term. Let's find a way to evaluate any tree expression to a natural
 number. Then we need a way to transform the empty tree to a number and a way to
@@ -502,7 +502,7 @@ Having this we create the evaluation function ::
         \ (next o)  :=  n (eval o)
         \ (lim f)   :=  l (\ n := eval (f n))
 
-You see the difference to ``Bad``? In the third case we have the pattern ``l (\
+Do you see the difference to ``Bad``? In the third case we have the pattern ``l (\
 n := ??)``. There is a number ``n`` which we can turn by ``f`` from the ``lim``
 constructor into an ordinal number and then we use a recursive call to ``eval``
 to transform the ordinal number to a natural number.
@@ -514,7 +514,7 @@ Let's define the evaluation function for ordinals generically ::
         {G: Any}                        -- goal of evaluation
         (z: G)                          -- The 3 elementary
         (n: G → G)                      -- evaluation functions
-        (l: (G → G) → G)                -- one for each constructor
+        (l: (ℕ → G) → G)                -- one for each constructor
     : Ord → G
     := case
         \ start     :=  z

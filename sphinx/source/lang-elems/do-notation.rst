@@ -8,9 +8,9 @@ Do notation can be used as a syntactic sugar for all types or type formers (i.e.
 type constructors) ``M`` with a bind operation named ``>>=`` of the following
 form::
 
-    (>=): all {A B C ...: Any):  M ... → (X → M C D ...) → M C D ...
-    --                                        ^^^^^^^^^    ^^^^^^^^^
-    --                                              same type!
+    (>>=): all {A B C ...: Any):  M ... → (X → M C D ...) → M C D ...
+    --                                         ^^^^^^^^^    ^^^^^^^^^
+    --                                               same type!
 
 Usually ``M`` is a type former and the bind operation looks like ::
 

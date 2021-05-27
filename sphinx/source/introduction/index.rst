@@ -12,8 +12,8 @@ means that is easy to write simple web applications or simple console
 applications, even for newcomers to programming.
 
 However internally alba offers all the goodies of dependent types including the
-possibility to write fully certified. Programs written in alba cannot produce
-runtime errors. All errors are compile time errors.
+possibility to write fully certified programs. Programs written in alba cannot
+produce runtime errors. All errors are compile time errors.
 
 A big challenge to reach the goal is to design the type system so that it does
 not get in the way. Furthermore it is very important to print understandable
