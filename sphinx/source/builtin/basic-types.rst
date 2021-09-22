@@ -112,7 +112,7 @@ decision procedures are compiled to more efficient runtime representations.
 .. code-block::
 
     -- Natural Numbers
-    class ℕ: Any := zero: ℕ; add1: ℕ → ℕ
+    class ℕ: Any := zero: ℕ; succ: ℕ → ℕ
 
     (=?): ℕ → ℕ → Boolean := case
         λ zero      zero        := true
@@ -130,8 +130,8 @@ decision procedures are compiled to more efficient runtime representations.
 
     (-): ℕ → ℕ → ℕ := case
         λ n         zero        :=  n
-        λ n         (add1 _)    :=  zero
-        λ (add1 n)  (add1 m)    :=  n - m
+        λ n         (succ _)    :=  zero
+        λ (succ n)  (succ m)    :=  n - m
 
     (*): ℕ → ℕ → ℕ := case
         λ zero      m           :=  zero
@@ -142,16 +142,16 @@ decision procedures are compiled to more efficient runtime representations.
         λ n         (succ m)    := n * (n ^ m)
 
     divAux: ℕ → ℕ → ℕ → ℕ → ℕ := case
-            -- n / (add1 m) = divAux 0 m n m
+            -- n / (succ m) = divAux 0 m n m
         λ k m   zero        j       :=  k
         λ k m   (succ n)    zero    :=  divAux (succ k) m n m
-        λ k m   (succ n)    (add1 j):=  divAux k m n j
+        λ k m   (succ n)    (succ j):=  divAux k m n j
 
     modAux: ℕ → ℕ → ℕ → ℕ → ℕ := case
-            -- n % (add1 m) = modAux 0 m n m
+            -- n % (succ m) = modAux 0 m n m
         λ k m   zero        j       :=  k
         λ k m   (succ n)    zero    :=  modAux 0 m n m
-        λ k m   (succ n)    (add1 j):=  modAux (succ k) m n j
+        λ k m   (succ n)    (succ j):=  modAux (succ k) m n j
 
 
 Key idea in ``divAux`` and ``modAux``: The number ``k`` is initialized to
@@ -167,8 +167,8 @@ representations.
 
     -- Integer Numbers
     class ℤ: Any :=
-        positive: ℕ → ℤ
-        negative1: ℕ → ℤ    -- 'negative1 n' represents '- (add1 n)'
+        positive:  ℕ → ℤ
+        negative1: ℕ → ℤ    -- 'negative1 n' represents '- (succ n)'
 
     (+): ℤ → ℤ → ℤ := ...
     (*): ℤ → ℤ → ℤ := ...
@@ -225,26 +225,24 @@ In the following we show the necessary definitions for ``UInt32``.
 
 .. code-block::
 
-    UInt32.toℕ: UInt32 → ℕ
-    UInt32.fromℕ: ℕ → UInt32        -- modulo 2^32
+    UInt32.toNatural:   UInt32 → ℕ
+    UInt32.fromNatural: ℕ → UInt32        -- modulo 2^32
 
-    UInt32.embeded: ∀ n: fromℕ (toℕ n) = n
-    UInt32.embeded: ∀ n m: toℕ n = toℕ m → n = m
+    UInt32.embedded: ∀ n: fromNatural (toNatural n) = n
+    UInt32.embedded: ∀ n m: toNatural n = toNatural m → n = m
 
     UInt32.(≤) (n m: UInt32): Proposition :=
-        toℕ n ≤ toℕ m
+        toNatural n ≤ toNatural m
 
     UInt32.(≤?) (n m: UInt32): Bool
 
     Unit32.bitSize: ℕ      -- bitsize is 'n + 1', cannot be zero
 
     UInt32.(+) (n m: UInt32): UInt32 :=
-        fromℕ (toℕ n + toℕ m)
+        fromNatural (toNatural n + toNatural m)
 
     UInt32.(-) (n m: UInt32): UInt32 :=
-        fromℕ (toℕ n + 2^(succ bitsize)- toℕ m)
-
-    UInt32.plusProperty: ∀ (n m: UInt32):
+        fromNatural (toNatural n + 2^(succ bitsize)- toNatural m)
 
 
 

@@ -22,7 +22,7 @@ and a *shebang*
 
 .. code-block:: bash
 
-    #! /usr/bin/env albax
+    #! /usr/bin/env alba
 
 at the beginning of a file are ignored by the compiler.
 
@@ -324,9 +324,9 @@ only the following are valid UTF-8 code points within source code.
 +--------+------------+------------------+
 | ¬      | U+00ac     | ``Not``          |
 +--------+------------+------------------+
-| ℕ      | U+03BB     | ``Natural``      |
+| ℕ      | U+2115     | ``Natural``      |
 +--------+------------+------------------+
-| ℤ      | U+03BB     | ``Integer``      |
+| ℤ      | U+2124     | ``Integer``      |
 +--------+------------+------------------+
 
 
