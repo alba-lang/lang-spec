@@ -305,6 +305,19 @@ Polymorphic Functions:
     Generic functions on objects pointing into the heap need only one machine
     code representation for all its possible types.
 
+The most efficient and closest to compilable mainstream languages would be to
+represent all scalar types which can fit into a machine word by the
+corresponding machine word and represent scalar types which cannot fit into a
+machine word (e.g. ``Int64`` on 32 bit machines) by pointer to a boxed value on
+the heap.
+
+Polymorphic arrays are then always sequences of machine words. Character arrays
+on 64 bit machines need 64 bits per character (however strings remain packed).
+
+The garbage collector needs type information. It cannot know by just looking at
+a word if it represents a scalar value or a pointer into the heap. It has to
+know the layout of each stack frame and the layout of all objects on the heap.
+
 .. note::
     More detailed analysis needed!
 
