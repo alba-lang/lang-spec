@@ -17,7 +17,12 @@ Universes and sorts are the same thing. There are the following universes::
     Any level       -- Stratified predicative universes
     Level           -- The type of predicative levels
 
-where ``levels`` are defined by the grammar::
+    --
+    once  Any level -- Universe for resource types
+    ref   Any level -- Universe for reference types (shared references)
+    ghost Any level -- Universe of ghost types
+
+where ``level`` is defined by the grammar::
 
     level ::=
         i               -- Fixed universe levels 0 1 2 ...

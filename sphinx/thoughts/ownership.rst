@@ -1,10 +1,68 @@
 ******************************************************
-Ownership
+Resources
 ******************************************************
+
+
+STATUS: VERY DRAFT !!!!
 
 
 Basics
 ==================================================
+
+Files, buffers etc. are considered as resources. Resources must be acquired,
+used and finally released. The acquisition and the release must happen in the
+same stackframe. ::
+
+    class File:   once Any
+               -- ^ the keyword 'once' indicates a resource
+    class Buffer: once Any
+
+    Buffer.allocate: UInt -> IO Buffer
+    Buffer.release:  Buffer -> IO Unit
+
+    File.open:  String -> IO File
+    File.close: File -> IO Unit
+
+A resource has only functions to acquire them and functions to release them.
+The usage happens only through references. A variable of type ``ref Buffer`` is
+a reference to a buffer object. ::
+
+    Buffer.clear: ref Buffer -> IO Unit
+              --  ^ the keyword 'ref' indicates a reference
+    Buffer.append: String -> ref Buffer -> IO Unit
+
+    File.write: ref Buffer -> ref File -> IO Unit
+
+
+Resources are represent objects of the external world and are therefore executed
+only in the ``IO`` monad. I.e. they can be created only by functions with the
+signature::
+
+    A₁ → A₂ → ... → IO Resource
+
+They can be released only by functions with the signature::
+
+    A₁ → A₂ → ... → Resource → ... → IO R
+
+They can be used only by functions with the signature::
+
+    A₁ → ... →  ref Resource → ... → IO R
+
+**Problem:**
+    The whole thing might not work in the type system, because we have ::
+
+        IO: Any -> Any
+
+    i.e. ``IO`` cannot handle resources. And if it could, it would have to
+    handle resources and non resources at the same time.
+
+**Brute force solution:**
+    Don't make special types for resources. Equip all functions handling
+    resources with error codes (e.g. file not open, buffer not allocated) and
+    free all allocated resources at the end of the program.
+
+
+* * * * *
 
 The basic idea has been developed in the Rust programming language.
 
@@ -44,17 +102,21 @@ Linear Types
 Some kind of linear types can be useful to implement interactions with the io
 system or the runtime system.
 
-A file descriptor can be considered as a resource. To open and close a file we
-can have the interface
+A file descriptor and a buffer descriptor can be considered as a resource. To
+open and close a file and to allocate and release a buffer we can have the
+interface
 
 .. code-block:: alba
 
-    open (name: String) (mode: Mode): IO once FileHandle
+    File.open (name: String) (mode: Mode): IO (once FileHandle)
+    File.close (fd: once FileHandle): IO Unit
 
-    close (fd: once FileHandle): IO Unit
+
+    Buffer.allocate (length: Uint): IO (once Buffer)
+    Buffer.release (bd: once Buffer): IO Unit
 
 The annotation ``once`` means that the type ``FileHandle`` is a resource
-which has to be used exactly once. With this annotations, the compiler can check
+which has to be used exactly once. With these annotations, the compiler can check
 that each opening of a file is followed by a closing of the file.
 
 The functions to read and write a file should not be considered as *using* the
@@ -62,8 +124,8 @@ file descriptor. We can similar to rust introduce some reference type.
 
 .. code-block:: alba
 
-    write (bd: ref BufferHandle) (fd: ref FileHandle): IO Unit
-    read  (bd: ref BufferHandle) (fd: ref FileHandle): IO Unit
+    File.write (bd: ref BufferHandle) (fd: ref FileHandle): IO Unit
+    File.read  (bd: ref BufferHandle) (fd: ref FileHandle): IO Unit
 
 
 A programm which opens a file reads to and then closes it has the form (error
@@ -73,12 +135,12 @@ handling ommitted)
 
     do
         fd := open "my-file" read
-        bd := alloc 1024
-        ...                 -- fill the buffer
-        write &bd &fd       -- '&' converts from 'once' to 'ref'
-        ...                 -- fill the buffer again
+        bd := allocate 1024
+        ...                     -- fill the buffer
+        write (ref bd) (ref bd) -- 'ref' converts from 'once' to 'ref'
+        ...                     -- fill the buffer again
         write (ref bd) (ref fd)
-        free bd
+        release bd
         close fd
 
 
@@ -94,7 +156,7 @@ Type attributes:
 
 ``once T``
     The type ``once T`` considered as a linear type, i.e. it has to be used
-    exactly once. An object of type ``once T`` can only passed as an actual
+    exactly once. An object of type ``once T`` can only be passed as an actual
     argument to functions if the type of the formal argument is also ``once
     T`` or if the formal argument is declared as ``once name: T``.
 
@@ -107,7 +169,7 @@ Type attributes:
 
         .. only:: draft
 
-            It might be possible. But it is more conservative to no allow
+            It might be possible. But it is more conservative to not allow
             objects of type ``T`` to given as arguments to functions expecting a
             ``once T``. At first sight there are no problems, because the
             function treats the object like a resource.
@@ -122,7 +184,7 @@ Type attributes:
     An object of this type can only be used in propositional functions. It is
     not available at runtime i.e. the compiler erases it at code generation.
 
-    ``T`` conforms to ``ghost> T``. Any object of type ``T`` can be passed to a
+    ``T`` conforms to ``ghost T``. Any object of type ``T`` can be passed to a
     function expecting a ``ghost T``.
 
     ``<ghost> T`` does not conform to ``T``.  Reason: The function might use the
