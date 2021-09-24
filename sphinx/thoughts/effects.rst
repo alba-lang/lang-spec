@@ -13,8 +13,50 @@ A trace is a sequence of io or runtime events. Examples of events:
 - Query the status of a filedescripor (is open, name, mode).
 
 
+.. code-block:: alba
+
+    IOBuffer: Any
+
+    File: Any
 
 
+    class Event: Any :=
+        allocate: UInt -> IOResult IOBuffer -> Event
+        release:  IOBuffer -> Event
+
+    Pre: Any :=
+        Predicate (List Event)
+
+    Post (A: Any): Any :=
+        A -> List Event -> Prop
+
+    JoinPre {A: Any} (Q1: Pre) (R1: Post A) (Q2: A -> Pre): Pre :=
+        λ t0 :=
+            Q1 t0
+            ∧
+            all a delta: R1 a delta -> Q2 a (delta + t0)
+
+    JoinPost {A B: Any} (R1: Post A) (R2: A -> Post B): Post B :=
+        λ b t :=
+            some a t0 delta:
+                t = delta + t0
+                ∧
+                R1 a t0
+                ∧
+                R2 a b t
+
+    SIO: Pre -> all {A: Any}: (A -> List Event -> Prop) -> Any
+
+
+    bind
+        {A B: Any}
+        {Q1: Pre}
+        {R1: Post A}
+        {Q1: A -> Pre}
+        {R2: A -> Post B}
+        (m: SIO Q1 R1)
+        (f: all (a: A): SIO (Q2 a) (R2 a))
+        : SIO (JoinPre Q1 R1 Q2) (JoinPost R1 R2)
 
 
 IO Monad
