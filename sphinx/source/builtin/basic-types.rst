@@ -41,6 +41,30 @@ Logical
         access {x}: (∀ y, R y x → Accessible y) → Accessible x
 
 
+Remark on existential quantification:
+    Existential quantification is often needed for more than one variable. E.g. if
+    we have a relation ``R: A → B → Prop`` we can write::
+
+        exAB: Exist (λ a := Exist (λ b := R a b)) :=
+            exist (exist rab)
+
+        -- with shorthand
+        exAB: some a b: R a b :=
+            exist (exist rAB)
+            -- with implicit variables made explicit
+            exist {a} (exist {b} rAB)
+
+    where ``exAB`` is a proof that ``a`` and ``b`` satisfying ``R a b`` exist and
+    ``rAB`` is a proof that some values ``a``  and ``b`` in the context satisfy ``R
+    a b``. We can pattern match on ``exAB``::
+
+        inspect
+            exAB
+        case
+            λ (exist {a0} (exist {b0} rAB0)) :=
+                -- Now we have variables 'a0' and 'b0' in the context and a proof
+                -- 'rAB0' that 'R a0 b0' is satisfied. :}
+
 
 General
 ----------------------------------------
