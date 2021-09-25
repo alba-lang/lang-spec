@@ -3,6 +3,29 @@ Effects
 ***************
 
 
+IO Errors:
+
+Normal Errors:
+    Errors which can occur and should be handled by the program. E.g. the
+    program wants to read a file and the file does not exist. The program wants
+    to create a file and does not have the permission to do so etc.
+
+Unusual Errors:
+    Disk full, maximum number of file descriptors exceeded, no buffer space
+    available, ...
+
+Bugs:
+    Read or write on a file descriptor which has been closed. Read or write to a
+    buffer which has been released.
+
+Interrupts:
+    On each IO action an interrupt can occur.
+
+
+
+Basics
+================================================================================
+
 
 A trace is a sequence of io or runtime events. Examples of events:
 
