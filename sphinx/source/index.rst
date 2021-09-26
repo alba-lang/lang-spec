@@ -18,6 +18,7 @@ Welcome to Alba's documentation!
     elaboration/index
     intermediate/index
     backend/index
+    draft/index
     bibliography
 
 
