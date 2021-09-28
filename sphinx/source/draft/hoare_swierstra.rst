@@ -182,6 +182,26 @@ Get and put ::
                 refine (unit,s) identical
 
 
+Adaption of pre- and postconditions::
+
+    adapt
+        {S A: Any}
+        {Q1 Q2: Pre S}
+        {R1 R2: Post S A}
+    :   (all s: Q2 s → Q1 s)
+        → (all s₀ a s₁: R1 s₀ a s₁ → R2 s₀ a s₁)
+        → HM Q1 R1
+        → HM Q2 R2
+    :=
+        λ fq fr m (refine s₀ q₀) :=
+            let
+                (refine (a,s₁) r₁ :=
+                    m (refine s₀ (fq s₀))
+            :=
+                refine (a,s₁) (fr s₀ a s₁)
+
+
+
 
 Certified Relabelling
 ================================================================================
@@ -232,6 +252,35 @@ Certified Relabelling
                 return (leaf n)
         λ (node t1 t2) :=
             do
-                t1 := relabel t1
-                t2 := relabel t2
-                return (node t1 t2)
+                u1 := relabel t1
+                u2 := relabel t2
+                return (node u1 u2)
+
+
+    relabel
+        {A: Any}
+        :   Tree A
+            → HM
+                (Top {ℕ})
+                (λ n₀ t n₁ :=
+                    n₁ = n₀ + size t
+                    ∧
+                    flatten t = seq n₀ (size t))
+    := case  -- INCOMPLETE!!!!
+        λ (leaf _) :=
+            get
+            >>=
+            (λ n :=
+                put (succ n)
+                >>=
+                (λ _ :=
+                    return (leaf n)))
+        λ (node t1 t2) :=
+            do
+                relabel t1
+                >>=
+                (λ u1 :=
+                    relabel u2
+                    >>=
+                    (λ u2 :=
+                        return (node  u1 u2)))
