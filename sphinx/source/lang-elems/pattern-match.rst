@@ -295,7 +295,7 @@ i` and claim that this sequence decreases lexicographically at each step of the
 algorithm.
 
 Proof:
-    Reordering does not change :math:``n_0 n_1 \ldots n_m``, it only decreases
+    Reordering does not change :math:`n_0 n_1 \ldots n_m`, it only decreases
     :math:`i`.
 
     Variable case splitting decreases the sequence lexicographically. The
