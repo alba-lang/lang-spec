@@ -175,7 +175,7 @@ Get and put ::
     put
         {S: Any}
         (s: S)
-        : HM (Top {S}) (λ _ _ s₁ := s₁ = s)
+        : HM (Top {S}) (λ _ _ s₁ := s = s₁)
     :=
         case
             λ (refine s _) :=
@@ -241,46 +241,44 @@ Certified Relabelling
             → HM
                 (Top {ℕ})
                 (λ n₀ t n₁ :=
-                    n₁ = n₀ + size t
-                    ∧
-                    flatten t = seq n₀ (size t))
+                    size t + n₀ = n₁)
     := case  -- INCOMPLETE!!!!
         λ (leaf _) :=
-            do
+            (do
                 n := get
                 put (succ n)
-                return (leaf n)
+                return (leaf n))
+            adapt
+                (λ _ _ := (
+                    trueValid,                  -- precondition of 'get'
+                    λ _ _ := (
+                        trueValid,              -- precondition of 'put'
+                        λ _ _ := trueValid      -- precondition of 'return'
+                )))
+                (λ  n₀
+                    t
+                    n₄
+                    (exist (exist (
+                        (eqN0N1,eqN0N),
+                        (exist (exist (
+                            eqN2SuccN,
+                            (exist (exist (
+                                (eqN2N3,eqLeafNT)
+                    )))))))))
+                 :=
+                    identical
+                 )
+
         λ (node t1 t2) :=
-            do
+            (do
                 u1 := relabel t1
                 u2 := relabel t2
                 return (node u1 u2)
-
-
-    relabel
-        {A: Any}
-        :   Tree A
-            → HM
-                (Top {ℕ})
-                (λ n₀ t n₁ :=
-                    n₁ = n₀ + size t
-                    ∧
-                    flatten t = seq n₀ (size t))
-    := case  -- INCOMPLETE!!!!
-        λ (leaf _) :=
-            get
-            >>=
-            (λ n :=
-                put (succ n)
-                >>=
-                (λ _ :=
-                    return (leaf n)))
-        λ (node t1 t2) :=
-            do
-                relabel t1
-                >>=
-                (λ u1 :=
-                    relabel u2
-                    >>=
-                    (λ u2 :=
-                        return (node  u1 u2)))
+            adapt
+                (λ _ _ := (
+                    trueValid,                  -- precondition of 'relabel'
+                    λ _ _ := (
+                        trueValid,              -- precondition of 'relabel'
+                        λ _ _ := trueValid      -- precondition of 'return'
+                )))
+                ()
