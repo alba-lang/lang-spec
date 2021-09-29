@@ -259,13 +259,14 @@ Transform into Canonical Form
 
 Definition of *canonical form*:
     A pattern match expression is in canonical form if there are no two
-    subsequent clauses with a focal pattern.
+    subsequent clauses with a focal pattern where the pattern are out of order
+    or overlapping.
 
 
 Transformation into *canonical form*:
     Search for a focal pattern in two subsequent clauses and do a reordering or
-    a case splitting until no more focal pattern in subsequent clauses can be
-    found.
+    a case splitting until no more focal pattern which are out of order or
+    overlapping can be found in subsequent clauses.
 
 
 It remains to be shown that the algorithm terminates.
@@ -374,7 +375,7 @@ Unification of the argument types with the pattern types gives the following
 unification problem::
 
     -- unify
-    zero    =   succ n
+    zero    =   succ n      -- 'succ n' cannot be unified with 'zero'
     zero    =   zero
 
 The unification problem has no solution. Therefore the potentially missing
@@ -396,7 +397,7 @@ The unification of the argument types with the pattern types gives the following
 unsolvable unification problem::
 
     -- unify
-    succ n  ≤   succ m
+    succ n  ≤   succ m      -- 'succ n' cannot be unified with 'zero'
     zero    ≤   k
 
 Therefore the obviously missing clause is not really missing.
