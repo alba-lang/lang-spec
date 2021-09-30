@@ -42,7 +42,8 @@ hand and not use the javascript ``==`` or ``===``.
 .. code-block:: javascript
 
     function float_equal (a,b) {
-        Object.is(a,b)
+        Object.is(a,b)      /* 'Object.is(a,b)' test, if 'a' and 'b' are the
+                                same value. */
     }
 
 IEEE floating point values have no linear order because of NaN. NaN is neither
@@ -76,11 +77,11 @@ Integer 32 Bit Arithmetic
 
 Javascript treats numbers as 64 bit floating point numbers by default. 64 bit
 floating point numbers can safely represent integer numbers *n* only if
-:math:`2^{53} < n < 2^{53}`.
+:math:`- 2^{53} < n < 2^{53}`.
 
 .. code-block:: javascript
 
-    Number.MAX_SAFE_INTEGER == Math.pox(2,31) - 1  // 9_007_199_254_740_991
+    Number.MAX_SAFE_INTEGER == Math.pow(2,31) - 1  // 9_007_199_254_740_991
     Number.MIN_SAFE_INTEGER == - Number.MAX_SAFE_INTEGER
 
 Overflow is not handled correctly in the sense of modulo arithmetic. Adding 1 to
@@ -90,9 +91,9 @@ A number *x* can be converted to a 32 bit integer value by ``x|0``. In order to
 get 32 bit modulo arithmetic with addition and substraction it is necessary to
 add the conversion ``|0`` after each addition and substraction.
 
-Standard multiplication can overflow cause an overflow into floating point
+Standard multiplication can cause an overflow into floating point
 numbers because multiplying two 32 bit values can result in values below
-:math:`2^{53}` or above :math:`2^{53}`. In order to do integer modulo
+:math:`- 2^{53}` or above :math:`2^{53}`. In order to do integer modulo
 multiplication correctly in javascript there is the function ``Math.imul(a,b)``.
 
 Division cannot overflow, but produces a fractional number represented as a
@@ -222,7 +223,7 @@ case if ``c₁`` is in the range ``0xd800 - 0xdbff`` and ``c₂`` is in the rang
 ``0xdc00 - 0xdfff``. In that case both represent the unicode code point ``(c₁ -
 0xd800) * 0x400 + (c₂ - 0xdc00) + 0x10000``.
 
-All elements which are not part of a surrogat pair are interpreted as the
+All elements which are not part of a surrogate pair are interpreted as the
 corresponding unicode code point.
 
 
@@ -363,7 +364,7 @@ A tail recursive function can be compiled to a javascript loop.
         }
     }
 
-It the pattern match matches on more than one pattern, the corresponding
+If the pattern match matches on more than one pattern, the corresponding
 ``switch/case`` has to be nested deeper.
 
 We use an object ``state`` to represent the arguments which are passed from any
@@ -382,7 +383,8 @@ instead of
     state = next1 ( state )
 
 we write
-::
+
+.. code-block:: javascript
 
     a1 = ...                // use temporaries, if necessary
     a1 = ...
@@ -404,7 +406,7 @@ a loop.  In any pattern clause which does not have a recursive call, the
 final result of the function can be returned.
 
 
-.. code-block::
+.. code-block:: javascript
 
     function foldLeft (f, b, xs) {
         for (;;) {
@@ -468,7 +470,9 @@ In order to keep it simple we use the usual algebraic type in javascript (note
 that natural number are normally represented as bignums in order to be
 efficient).
 
-The compiler generates the following javascript functions::
+The compiler generates the following javascript functions
+
+.. code-block:: javascript
 
     function even (n) { return even_odd ([0, n]) }
     function odd  (n) { return even_odd ([1, n]) }
@@ -519,12 +523,14 @@ bounce object. We can iterate over a series of bounce objects.
 .. code-block:: alba
 
     iter {A: Any}: Bounce A -> A := case
-        \ (done x)  :=  y
+        \ (done x)  :=  x
         \ (more f)  :=  iter (f ())
 
 Evidently ``iter`` is tail recursive and can be implemented by a javascript
 loop.
-::
+
+.. code-block:: javascript
+
 
     function iter (b) {
         for(;;) {
@@ -616,7 +622,7 @@ function ``fCPS`` to a javascript function is straightforward.
 
 
 
-.. code-block::
+.. code-block:: javascript
 
     function identity (x) { return x }
 
