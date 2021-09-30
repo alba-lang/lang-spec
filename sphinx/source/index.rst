@@ -15,8 +15,8 @@ Welcome to Alba's documentation!
     introduction/index
     lang-elems/index
     builtin/index
-    elaboration/index
     intermediate/index
+    compilation/index
     backend/index
     draft/index
     bibliography
