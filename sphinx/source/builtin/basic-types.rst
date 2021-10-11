@@ -140,7 +140,7 @@ decision procedures are compiled to more efficient runtime representations.
 
     (=?): ℕ → ℕ → Boolean := case
         λ zero      zero        := true
-        λ (succ n)  (succ m)    := true
+        λ (succ n)  (succ m)    := n =? m
         λ _         _           := false
 
     (<?): ℕ → ℕ → Boolean := case
