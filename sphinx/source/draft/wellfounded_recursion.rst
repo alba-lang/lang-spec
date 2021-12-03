@@ -36,7 +36,7 @@ We assume that the following declarations are available for natural numbers::
     (<): Endorelation ℕ :=
         λ x y := succ x ≤ y
 
-    leToNotLt: ∀ {x y}: x ≤ y → not y < x :=
+    leToNotLt: ∀ {x y}: x ≤ y → Not y < x :=
         ...
 
     ltIrreflexive: ∀ {x}: x < x → False :=
@@ -44,7 +44,7 @@ We assume that the following declarations are available for natural numbers::
 
     succLowerBound
         {P: Predicate ℕ}
-        : ∀ {x}: LowerBound P x → not P x → LowerBound P (succ x)
+        : ∀ {x}: LowerBound P x → Not P x → LowerBound P (succ x)
     :=
         ...
 
@@ -52,12 +52,12 @@ We assume that the following declarations are available for natural numbers::
         ∀ {x}: P x → n ≤ x
 
     Least (P: Predicate ℕ) (n: ℕ): Prop :=
-        LowerBound P n and P n
+        LowerBound P n ∧ P n
 
 
 
 The algorithm is intuitively clear. We check if the number zero satisfies the
-predicate. If yes, we have found the number. If not we check the next number and
+predicate. If yes, we have found the number. If Not we check the next number and
 iterate the function until we have found a number satisfying the predicate::
 
     findAux
@@ -80,7 +80,7 @@ We use the relation::
 
     Rel (P: Predicate ℕ): Endorelation ℕ :=
         λ y x :=
-            succ x = y and LowerBound P y
+            succ x = y ∧ LowerBound P y
 
 
 and the inductive definition to define the accessible elements of an
@@ -116,7 +116,7 @@ accessible.
             f: ∀ {y}: succ x = y → LowerBound P y → Accessible (Rel P) y
             :=
                 λ identical lbSuccX :=
-                    lbSuccX satX: x < x |> ltIrreflexive |> exFalso
+                    (lbSuccX satX: x < x) |> ltIrreflexive |> exFalso
 
 
     accessibleToPredecessor
@@ -126,7 +126,7 @@ accessible.
     :=
         λ accSuccX :=
             access f where
-                f: ∀ {y}: succ x = y and LowerBound P y → Accessible (Rel P) y :=
+                f: ∀ {y}: succ x = y ∧ LowerBound P y → Accessible (Rel P) y :=
                     λ (identical, _) := accSuccX
 
 
