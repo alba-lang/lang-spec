@@ -12,32 +12,32 @@ Logical
 
 .. code-block::
 
-    Predicate (α: Any): Any := α → Proposition
+    Predicate (A: Any): Any := A → Prop
 
-    Relation (α β: Any): Any := α → β → Proposition
+    Relation (A B: Any): Any := A → B → Prop
 
-    Endorelation (α: Any): Any := Relation α
+    Endorelation (α: Any): Any := Relation α α
 
-    class (=) (α: Any) (x: α): Predicate α :=
+    class (=) {A: Any} (x: A): Predicate A :=
         identical: (=) x
 
-    class Exist {α: Any} (P: Predicate α): Proposition :=
+    class Exist {A: Any} (P: Predicate A): Prop :=
         exist {x}: P x → Exist
 
-    class False: Proposition :=     -- no constructor
+    class False: Prop :=     -- no constructor
 
-    class True: Proposition  := trivial
+    class True: Prop  := trueValid: True
 
-    (¬) (A: Proposition): Proposition := A → False
+    (¬) (A: Prop): Prop := A → False
 
-    class (∧) (A B: Proposition): Proposition :=
+    class (∧) (A B: Prop): Prop :=
         (,): A → B → (∧)
 
-    class (∨) (A B: Proposition): Proposition :=
+    class (∨) (A B: Prop): Prop :=
         left  : A → (∨)
         right : B → (∨)
 
-    class Accessible {α: Any} (R: Endorelation α): Predicate α :=
+    class Accessible {A: Any} (R: Endorelation A): Predicate A :=
         access {x}: (∀ y, R y x → Accessible y) → Accessible x
 
 
@@ -81,43 +81,61 @@ General
         true:  A        →   Reflect true
         false: Not A    →   Reflect false
 
-    class List {α: Any} := ([]); (::): α → List → List
+    class List {A: Any} := ([]); (::): A → List → List
 
-    class (,) (α β: Any) := (,)
+    class (,) (A B: Any): Any :=
+        (,): A → B → (,)
 
-    class Result (A B: Any) :=
+    class Result (A B: Any): Any :=
         ok      :   A → Result
         error   :   B → Result
 
-    class Either (α β: Any) :=
+    class Either (α β: Any): Any :=
         left    :   A → Either
         right   :   B → Either
 
-    class Tristate (α β γ: Any) :=
-        left    : α → Tristate
-        middle  : β → Tristate
-        right   : γ → Tristate
-
-    Decision (A: Proposition) :=
+    Decision (A: Prop): Any :=
         Either A (Not A)
 
-    class Maybe (A: Any) :=
+    class Maybe (A: Any): Any :=
         nothing : Maybe
         just    : A -> Maybe
 
-    class Refine {α: Any} (P: Predicate α) :=
+    class Refine {A: Any} (P: Predicate A) :=
         refine x: P x → Refine
 
-    (|>) {α: Any} {B: α → Any} (x: α) (f: ∀ x: B x): B x :=
+    (|>)
+        {A: Any}
+        {F: A → Any}
+        (x: A)
+        (f: ∀ x: F x)
+        : F x
+    :=
         f x
 
-    (<|) {α: Any} {B: α → Any} (f: ∀ x: B x) (x: α): B x :=
+    (<|)
+        {A: Any}
+        {F: A → Any}
+        (f: ∀ x: F x)
+        (x: A)
+        : F x
+    :=
         f x
 
-    (>>) {α β γ: Any} (f: α → β) (g: β → γ): α → γ :=
+    (>>)
+        {A B C: Any}
+        (f: A → B)
+        (g: B → C)
+        : A → C
+    :=
         λ x := g (f x)
 
-    (<<) {α β γ: Any} (g: β → γ) (f: α → β): α → γ :=
+    (<<)
+        {A B C: Any}
+        (g: B → C)
+        (f: A → B)
+        : A → C
+    :=
         λ x := g (f x)
 
 
@@ -255,7 +273,7 @@ In the following we show the necessary definitions for ``UInt32``.
     UInt32.embedded: ∀ n: fromNatural (toNatural n) = n
     UInt32.embedded: ∀ n m: toNatural n = toNatural m → n = m
 
-    UInt32.(≤) (n m: UInt32): Proposition :=
+    UInt32.(≤) (n m: UInt32): Prop :=
         toNatural n ≤ toNatural m
 
     UInt32.(≤?) (n m: UInt32): Bool
