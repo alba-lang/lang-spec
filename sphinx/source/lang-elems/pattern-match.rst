@@ -22,7 +22,7 @@ expression is a function type which has the general form
 
     -- in long form
 
-    ∀ {n m: ℕ} (_: succ n ≤ add2 m): n ≤ m
+    ∀ {n m: ℕ} (_: succ n ≤ succ m): n ≤ m
 
 
 Note that type annotations can be ommitted as long as the compiler can infer
@@ -127,7 +127,7 @@ Exhaustive:
 
 Reachable:
     All clauses must be reachable. I.e. for each clause there is at least one
-    set of arguments which matches the clause whih fails to match all previous
+    set of arguments which matches the clause and fails to match all previous
     clauses.
 
 
@@ -312,9 +312,9 @@ Proof:
 Reachability
 ==============================
 
-Reachability is can be checked by transforming a pattern match expression into
-its canonical form. Clauses which are unreachable follow immediately the
-clause which shadows the unreachable clauses. The unreachable clauses have to be
+Reachability can be checked by transforming a pattern match expression into its
+canonical form. Clauses which are unreachable follow immediately the clause
+which shadows the unreachable clauses. The unreachable clauses have to be
 eliminated.
 
 Each clause in the canonical form stems exactly from one original clause. If all
@@ -387,7 +387,7 @@ Example 2::
 
     case
         { ∀ {n m: ℕ}: succ n ≤ succ m → n ≤ m }
-        λ {i j} (next {i j} (le: i ≤ j): add1 i ≤ add1 j) := le
+        λ {i j} (next {i j} (le: i ≤ j): succ i ≤ succ j) := le
 
 The obviously missing clause has the form::
 
