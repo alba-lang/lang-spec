@@ -29,13 +29,14 @@ Module: alba.core.general
         error   :   B -> Result
 
 
-    class Either (α β: Any): Any :=
+    class Either (A B: Any): Any :=
         left    :   A -> Either
         right   :   B -> Either
 
 
-    Decision (A: Prop): Any :=
-        Either A (Not A)
+    class Decision (A: Prop): Any :=
+        true:  A     -> Decision
+        false: Not A -> Decision
 
 
     class Maybe (A: Any): Any :=
