@@ -15,9 +15,6 @@ Axioms and Builtin Definitions
 
     Endorelation (A: Any): Any := Relation A A
 
-    class (=) {A: Any} (x: A): Predicate A :=
-        identical: (=) x
-
     class Exist {A: Any} (P: Predicate A): Prop :=
         exist {x}: P x -> Exist
 
@@ -26,6 +23,12 @@ Axioms and Builtin Definitions
     class True: Prop  := trueValid: True
 
     (Not) (A: Prop): Prop := A -> False
+
+    class (=) {A: Any} (x: A): Predicate A :=
+        identical: (=) x
+
+    (/=) {A: Any} (a b: A): Prop :=
+        Not (a = b)
 
     class (/\) (A B: Prop): Prop :=
         (,): A -> B -> (/\)
