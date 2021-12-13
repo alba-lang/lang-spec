@@ -1,46 +1,12 @@
 .. _Pattern Match:
 
-****************************************
+********************************************************************************
 Pattern Match
-****************************************
-
-
-Type
-==============================
-
-
-The type of a pattern match
-expression is a function type which has the general form
-
-.. code-block::
-
-    ∀ (x₁: A₁) (x₂: A₂) ... : R
-
-    -- example
-
-    ∀ {n m}: succ n ≤ succ m → n ≤ m
-
-    -- in long form
-
-    ∀ {n m: ℕ} (_: succ n ≤ succ m): n ≤ m
-
-
-Note that type annotations can be ommitted as long as the compiler can infer
-them and ``A → B`` is a shorthand for ``∀ (_: A): B``. Braces are used to mark
-implicit arguments.
-
-Variables which occur in types are inferrable variables and the corresponding
-types are dependent types. In the example ``n`` and ``m`` are inferrable
-variables and ``succ n ≤ succ m`` and ``n ≤ m`` are dependent types.
-
-In a type of a pattern match expression, all implicit variables must be
-inferrable variables. The reverse is not true in general.
-
-
+********************************************************************************
 
 
 Syntax
-==============================
+================================================================================
 
 The general form of a pattern match expression:
 
@@ -73,8 +39,42 @@ A pattern is one of:
 
 
 
+Type
+================================================================================
+
+
+The type of a pattern match
+expression is a function type which has the general form
+
+.. code-block::
+
+    ∀ (x₁: A₁) (x₂: A₂) ... : R
+
+    -- example
+
+    ∀ {n m}: succ n ≤ succ m → n ≤ m
+
+    -- in long form
+
+    ∀ {n m: ℕ} (_: succ n ≤ succ m): n ≤ m
+
+
+Note that type annotations can be ommitted as long as the compiler can infer
+them and ``A → B`` is a shorthand for ``∀ (_: A): B``. Braces are used to mark
+implicit arguments.
+
+Variables which occur in types are inferrable variables and the corresponding
+types are dependent types. In the example ``n`` and ``m`` are inferrable
+variables and ``succ n ≤ succ m`` and ``n ≤ m`` are dependent types.
+
+In a type of a pattern match expression, all implicit variables must be
+inferrable variables. The reverse is not true in general.
+
+
+
+
 Rules
-==============================
+================================================================================
 
 Distinct pattern variables:
     All variables used in the explicit pattern of the same pattern clause have
@@ -108,7 +108,7 @@ Type completeness:
     m`` is a legal type.
 
 
-Consistent types:
+Welltyped:
     The types in the ``i``\ th pattern clause (``Ai₁ Ai₂ ... Ri``) must be
     unifiable with the corresponding types (``A₁ A₂ ... R``) of the type of the
     pattern match expression where all inferable variables are considered as
@@ -119,11 +119,15 @@ Consistent types:
     corresponding types in the type of the pattern match. In the extreme case
     there are no allowed pattern clauses and the pattern match is empty.
 
+    For the details of type checking see section :ref:`welltyped`.
+
+
 Exhaustive:
     For all possible arguments which do not contain variables at least one of
     the pattern clauses must match. The check for being exhaustive can be done
-    by transforming a pattern match expression into its canonical form (see next
-    chapter).
+    by transforming a pattern match expression into its canonical form (see
+    section :ref:`canonical-forms`). For the details to check exhaustiveness see
+    section :ref:`exhaustiveness`.
 
 Reachable:
     All clauses must be reachable. I.e. for each clause there is at least one
@@ -134,8 +138,61 @@ Reachable:
 
 
 
+.. _welltyped:
+
+Welltyped
+================================================================================
+
+The general form of a pattern match expression is ::
+
+    case
+        { ∀ (x: A) (y: B) ... : R}
+        λ p q ... := e
+        ...
+
+where ``p`` and ``q`` are pattern. This is equivalent to ::
+
+    case
+        { ∀ (x: A): (y: B): ... : R}
+        λ p := λ q := ... := e
+        ...
+
+In order to typecheck a clause we typecheck from left to right first all
+arguments and finally the result type. We consider all variables in the type as
+substitutable. Each typecheck step for one variable replaces the coresponding
+variable in the type by an expression from the pattern.
+
+At the start of the checking we have all variables of the type unassigned. In
+the ``i``\ th step all variables before the ``i``\ th variable of the type are
+assigned. We look at the ``i``\ th argument and the corresponding pattern. ::
+
+    -- explicit argument                    implicit argument
+    ∀ (x: A): R                             ∀ {x: A}: R
+    λ p := ...                              λ {p}
+
+Note that the variables before ``x`` can occur in the type ``A`` and they have
+already been replaced by their corresponding expressions. ``R`` represents the
+remaining type where all substitutions have been done as well.
+
+If the implicit argument does not appear in the pattern we introduce a variable
+pattern. The pattern might have an optional type.
+
+The argument typechecks if ``p: A`` is a valid typing judgement. For a variable
+pattern this is always the case. If the argument typechecks we replace the
+variable ``x`` in the remaining type ``R`` by ``p``.
+
+After all arguments have been typechecked we have a remaining type ``R`` where
+all variables from the type have been replaced by variables from the pattern
+line.
+
+The whole pattern line typechecks if ``e: R`` is a valid typing judgement.
+
+
+
+.. _canonical-forms:
+
 Canonical Forms
-==============================
+================================================================================
 
 The transformation into canonical form works by case splitting on variable
 pattern, reordering of the pattern clauses and dropping of non reachable
@@ -310,7 +367,7 @@ Proof:
 
 
 Reachability
-==============================
+================================================================================
 
 Reachability can be checked by transforming a pattern match expression into its
 canonical form. Clauses which are unreachable follow immediately the clause
@@ -326,9 +383,10 @@ original clause is unreachable which has to be flagged as an error.
 
 
 
+.. _exhaustiveness:
 
 Exhaustiveness
-==============================
+================================================================================
 
 Exhaustiveness can be easily checked in the canonical form where all
 nonreachable clauses have been removed.
