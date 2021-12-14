@@ -14,5 +14,6 @@ builtin types and the corresponding functions reside all in the package
     logic
     natural
     integer
+    nat
     list
     basic-types
