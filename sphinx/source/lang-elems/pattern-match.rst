@@ -187,6 +187,23 @@ line.
 
 The whole pattern line typechecks if ``e: R`` is a valid typing judgement.
 
+The type checking and the elaboration of pattern clauses goes hand in hand. For
+each argument the following steps can be made:
+
+- The type of the constructed argument is given from the type of the pattern
+  match expression where all previous substitutions have been done. For variable
+  pattern the type of the variable is trivially determined. For constructor
+  pattern all parameters (which are always implicit arguments for constructors)
+  are uniquely determined.
+
+- If the required argument type has index arguments, then the index arguments
+  can depend on previous variables which have already been replaced by their
+  substitutions i.e. they can depend on previous variables of the pattern
+  clause. The actual pattern type depends on the variables of the current
+  pattern. Unification of required and actual type usually creates dependencies
+  between the current variables and the previous variables. The unification can
+  fail. In the failure case the pattern clause is not welltyped.
+
 
 
 .. _canonical-forms:

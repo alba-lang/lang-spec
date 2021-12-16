@@ -79,9 +79,14 @@ Constructors:
 
         c₂:
             all
-                (p₁: P₁) (p₂: P₂) ...           -- all parameters
+                {p₁: P₁} {p₂: P₂} ...           -- all parameters (implicit)
                 (b₂₁: B₂₁) (b₂₂: B₂₂) ...
             : Name p₁ p₂ ... a₂₁ a₂₂ ...
+
+      All parameters of the inductive type are implicit arguments for the
+      constructors. Note that parameter do not vary with the different
+      constructors i.e. they are the same for all constructors. Therefore the
+      type uniquely determines the parameters.
 
 
     - The inductive type ``Name`` either does not occur in the constructor
