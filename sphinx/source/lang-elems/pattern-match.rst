@@ -27,15 +27,32 @@ Pattern can be explicit (``p`` or ``(p: A)``) or implicit (``{p}`` or ``{p:
 A}``.
 
 
-A pattern is one of:
 
-- variable (or a wildcard ``_``)
+Syntax for pattern::
 
-- constructor applied to pattern
+    p   ::=     identifier/operator
+        |       _
+        |       constant            -- number, character, string
+        |       p p
 
-- arbitrary expression (only allowed in implicit pattern)
 
+I.e. a pattern is a head term (identifier, operator, _, constant) followed by
+zero or more argument pattern with the restriction that ``_`` and constants
+cannot have arguments. Operators can be used in prefix or infix form. In the
+abstract syntax we use only the prefix form.
 
+Example::
+
+    case
+        { List (ℕ, String) → ℕ }
+
+        λ (::) ((,) (succ i) "hello") ((::) ((,) x _) _     -- prefix form
+        :=
+            i + x
+
+        λ (succ i, "hello") :: (x,_) :: _                   -- infix form
+        :=
+            i + x
 
 
 
@@ -162,7 +179,7 @@ arguments and finally the result type. We consider all variables in the type as
 substitutable. Each typecheck step for one variable replaces the coresponding
 variable in the type by an expression from the pattern.
 
-At the start of the checking we have all variables of the type unassigned. In
+At the start of the checking we have all variables in the type unassigned. In
 the ``i``\ th step all variables before the ``i``\ th variable of the type are
 assigned. We look at the ``i``\ th argument and the corresponding pattern. ::
 
@@ -187,22 +204,47 @@ line.
 
 The whole pattern line typechecks if ``e: R`` is a valid typing judgement.
 
-The type checking and the elaboration of pattern clauses goes hand in hand. For
-each argument the following steps can be made:
 
-- The type of the constructed argument is given from the type of the pattern
-  match expression where all previous substitutions have been done. For variable
-  pattern the type of the variable is trivially determined. For constructor
-  pattern all parameters (which are always implicit arguments for constructors)
-  are uniquely determined.
+Hints for elaboration of ``p: A``:
 
-- If the required argument type has index arguments, then the index arguments
-  can depend on previous variables which have already been replaced by their
-  substitutions i.e. they can depend on previous variables of the pattern
-  clause. The actual pattern type depends on the variables of the current
-  pattern. Unification of required and actual type usually creates dependencies
-  between the current variables and the previous variables. The unification can
-  fail. In the failure case the pattern clause is not welltyped.
+1. The elaborator looks at the head term in
+``p`` (note that ``p`` is always a head term followed by zero or more argument
+pattern).
+
+    - Head term is a constant: For a number ``A`` has to be a numerical type.
+      For a character ``A`` has to be ``Char``. For a string ``A`` has to be
+      ``String``. Constants cannot have argument pattern.
+
+    - Head term is the wildcard ``_``: ``A`` can be any type. The pattern is treated
+      as a variable pattern and no argument pattern are possible.
+
+    - Head term is an identifier (operator): If ``A`` is an inductive type and
+      the identifier is the name of one of the constructors of ``A``, then the
+      identifier is treated as the corresponding constructor of the type.
+      Otherwise the identifier is treated as a variable pattern an therefore
+      cannot have argument pattern.
+
+
+2. Argument pattern: One or more argument pattern can only be present if the
+   head term is an identifier/operator which is a constructor of the inductive
+   type ``A``.
+
+    - The parameters of the inductive type ``A`` are the first implicit
+      arguments of the constructor. Parameters are treated as constants and if
+      present in the constructor arguments then they have to match exactly (or
+      be the wildcard ``_`` which the elaborator instantiates with the
+      corresponding parameter in ``A``).
+
+    - Non-present implicit arguments of the constructor which are not parameters
+      are instantiated by the elaborator as variables.
+
+    - Argument pattern have a required type which is uniquely determined by the
+      type of the constructor argument in the definition of the inductive type
+      (parameters properly instantiated). Therefore we have a required typing
+      judgement of the form ``q: B`` where ``q`` is the argument pattern and
+      ``B`` is the required type of the corresponding constructor argument.
+
+
 
 
 
