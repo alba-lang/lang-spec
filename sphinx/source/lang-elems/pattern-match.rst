@@ -174,10 +174,10 @@ where ``p`` and ``q`` are pattern. This is equivalent to ::
         λ p := λ q := ... := e
         ...
 
-In order to typecheck a clause we typecheck from left to right first all
-arguments and finally the result type. We consider all variables in the type as
-substitutable. Each typecheck step for one variable replaces the coresponding
-variable in the type by an expression from the pattern.
+In order to typecheck a clause we typecheck from left to right all arguments and
+finally the result type. We consider all variables in the type as substitutable.
+Each typecheck step for one argument replaces the coresponding variable in the
+type by an expression from the pattern.
 
 At the start of the checking we have all variables in the type unassigned. In
 the ``i``\ th step all variables before the ``i``\ th variable of the type are
@@ -191,8 +191,8 @@ Note that the variables before ``x`` can occur in the type ``A`` and they have
 already been replaced by their corresponding expressions. ``R`` represents the
 remaining type where all substitutions have been done as well.
 
-If the implicit argument does not appear in the pattern we introduce a variable
-pattern. The pattern might have an optional type.
+If an implicit argument in the type does not appear in the pattern we introduce
+a variable pattern. The pattern might have an optional type.
 
 The argument typechecks if ``p: A`` is a valid typing judgement. For a variable
 pattern this is always the case. If the argument typechecks we replace the
@@ -243,6 +243,35 @@ pattern).
       (parameters properly instantiated). Therefore we have a required typing
       judgement of the form ``q: B`` where ``q`` is the argument pattern and
       ``B`` is the required type of the corresponding constructor argument.
+
+3. The *variables* in the pattern:
+
+   A variable in the pattern is either an identifier which is not a constructor
+   or the wildcard ``_``.
+
+   - A variable is a pattern variable if it is not at the position of an
+     inferable constructor argument.
+
+   - Pattern variables have to be different identifiers or the wildcard ``_``.
+     If the pattern variable is the wildcard, then the elaborator generates a
+     new variable different from all other pattern variables.
+
+   - An inferable constructor argument cannot be a pattern variable. If it is an
+     identifier, it has to be an already introduced pattern variable.
+
+   - If an inferable constructor argument is not present or it is present as the
+     wildcard ``_``, then the elaborator introduces a metavariable which will be
+     instantiated during unification.
+
+   - Pattern variables can be used in subsequent pattern and in the expressions
+     of the pattern clauses.
+
+   - Each top level pattern has an actual type and a required type. The required
+     type is the type of the formal argument of the pattern match expression
+     corresponding to the top level pattern with the variables of the type
+     properly substituted. The required and the actual type are unified by the
+     elaborator. In case of success the metavariables are instantiated. In case
+     of failure the pattern clause is not welltyped.
 
 
 
