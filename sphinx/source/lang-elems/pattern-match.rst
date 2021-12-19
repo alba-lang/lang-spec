@@ -273,6 +273,56 @@ pattern).
      elaborator. In case of success the metavariables are instantiated. In case
      of failure the pattern clause is not welltyped.
 
+Some examples::
+
+    case
+        { ∀ {n: ℕ} (eq: zero = succ n): False }
+
+        λ {i} (identical {ℕ} {i}) := ...
+        -- |              |   |
+        -- |              \----> parameters
+        -- v
+        -- pattern variable
+
+The identifier ``i`` is neither a constructor nor an inferable constructor argument, therefore it is a pattern variable. Because of the substitution ``n := i`` the required type for the second pattern is ``(=) {ℕ} zero (succ i)``. The parameters are ``ℕ`` and ``i``. They are inferred or if present must match. The actual type of the second pattern is ``(=) {ℕ} zero zero``. Unification with the required type fails. The pattern clause is not welltyped.
+
+.. code-block::
+
+    case
+        {a b: ℕ} (_: succ (succ a) ≤ succ (succ b)): a ≤ b
+
+
+        -- long form with metavariables
+        λ {i} {j} (next {?k} {?l} (next {?m} {?n} le)) := le
+        -- |   |          |    |          |    |   |
+        -- |   |          |    |          |    |   \-> pattern variables
+        -- |   |          |    |          |    |
+        -- |   |          \----------------------> metavariables
+        -- \-----> pattern variables
+
+
+        -- long form without metavariables
+        λ {i} {j} (next {succ i} {succ j} (next {i} {j} le)) := le
+
+        -- short form
+        λ (next (next le)) := le
+
+- ``i`` and ``j`` are definitely pattern variables. If not present, the
+  elaborator generates them.
+
+- ``k``, ``l``, ``m`` and ``n`` are not pattern variables. I.e. if present, they
+  have to be metavariables or the wildcard or expressions involving already
+  present pattern variables.
+
+- The metavariables are instantiated by the following unification problems::
+
+    succ (succ i) ≤ succ (succ j)           -- required type
+    succ ?k       ≤ succ ?l                 -- actual type
+    -- ~~> ?k, ?l := succ i, succ j
+
+    succ i  ≤ succ j                        -- required type
+    succ ?m ≤ succ ?n                       -- actual type
+    -- ~~> ?m, ?n := i,j
 
 
 
