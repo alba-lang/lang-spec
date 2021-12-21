@@ -139,7 +139,7 @@ Positivity:
         -- expression which runs forever
         run (make run)
 
-    Note that these declaration pass the type checker except for the violated
+    Note that these declarations pass the type checker except for the violated
     positivity condition.
 
 
