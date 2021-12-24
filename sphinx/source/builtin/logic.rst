@@ -15,17 +15,11 @@ Axioms and Builtin Definitions
 
     Endorelation (A: Any): Any := Relation A A
 
-    class Exist {A: Any} (P: Predicate A): Prop :=
-        exist {x}: P x -> Exist
-
     class False: Prop :=     -- no constructor
 
     class True: Prop  := trueValid: True
 
     (Not) (A: Prop): Prop := A -> False
-
-    class (=) {A: Any} (x: A): Predicate A :=
-        identical: (=) x
 
     (/=) {A: Any} (a b: A): Prop :=
         Not (a = b)
@@ -41,6 +35,12 @@ Axioms and Builtin Definitions
     class (\/) (A B: Prop): Prop :=
         left  : A -> (\/)
         right : B -> (\/)
+
+    class Exist {A: Any} (P: Predicate A): Prop :=
+        exist {x}: P x -> Exist
+
+    class (=) {A: Any}: Endorelation A :=
+        identical {x} : x = x
 
     class Accessible {A: Any} (R: Endorelation A): Predicate A :=
         access {x}: (∀ y, R y x -> Accessible y) -> Accessible x
@@ -58,11 +58,18 @@ Equality
     := case
         \ identical := identical
 
+        -- long form
+        \ {x} {x} (identical {x}) := identical {x}
+
 
     (=).(+) {A: Any}: all {a b c: A}: a = b -> b = c -> a = c
         -- Equality is transitive.
     := case
         \ identical identical := identical
+
+        -- long form
+        \ {x} {x} {x} (identical {x}) (identical {x}) :=
+            identical {x}
 
 
     (=).inject
@@ -71,3 +78,7 @@ Equality
         -- Equal arguments to a function imply equal results.
     := case
         \ identical = identical
+
+        -- long form
+        \ {x} {x} (identical {x}) :=
+            identical {f x}
