@@ -73,7 +73,9 @@ Equality
 
 
     (=).inject
-        {A: Any} {P: A -> Any} (f: all x: P x)
+        {A: Any}
+        {F: A -> Any}
+        (f: all x: F x)
         : all {a b}: a = b -> f a = f b
         -- Equal arguments to a function imply equal results.
     := case
@@ -82,3 +84,16 @@ Equality
         -- long form
         \ {x} {x} (identical {x}) :=
             identical {f x}
+
+
+    (=).substitute
+        {A: Any}
+        : all {a b} {F: A -> Any}: a = b -> F a -> F b
+        -- Equal expressions satisfy the same predicate
+    := case
+        \ identical e :=
+            e
+
+        -- long form
+        \ {x x F} (identical {x}) e :=
+            e
