@@ -167,12 +167,8 @@ The general form of a pattern match expression is ::
         λ p q ... := e
         ...
 
-where ``p`` and ``q`` are pattern. This is equivalent to ::
-
-    case
-        { ∀ (x: A): (y: B): ... : R}
-        λ p := λ q := ... := e
-        ...
+where ``p`` and ``q`` are pattern. For each argument in the type ``(x: A)``
+there is a corresponding pattern ``p``.
 
 In order to typecheck a clause we typecheck from left to right all arguments and
 finally the result type. We consider all variables in the type as substitutable.
@@ -187,142 +183,59 @@ assigned. We look at the ``i``\ th argument and the corresponding pattern. ::
     ∀ (x: A): R                             ∀ {x: A}: R
     λ p := ...                              λ {p}
 
-Note that the variables before ``x`` can occur in the type ``A`` and they have
-already been replaced by their corresponding expressions. ``R`` represents the
-remaining type where all substitutions have been done as well.
+Note that the variables in the type before ``x`` can occur in the type ``A`` and
+they have already been replaced by their corresponding expressions. ``R``
+represents the remaining type where all substitutions have been done as well.
 
-If an implicit argument in the type does not appear in the pattern we introduce
-a variable pattern. The pattern might have an optional type.
+If an implicit argument in the type does not have a corresponding pattern, we
+add the wildcard pattern ``_``.
 
-The argument typechecks if ``p: A`` is a valid typing judgement. For a variable
-pattern this is always the case. If the argument typechecks we replace the
-variable ``x`` in the remaining type ``R`` by ``p``.
+In order to elaborate the pattern we have to distinguish various cases:
 
-After all arguments have been typechecked we have a remaining type ``R`` where
-all variables from the type have been replaced by variables from the pattern
-line.
+- Head term is a constant: For a number ``A`` has to be a numerical type.
+  For a character ``A`` has to be ``Char``. For a string ``A`` has to be
+  ``String``. Constants cannot have argument pattern.
 
-The whole pattern line typechecks if ``e: R`` is a valid typing judgement.
+- Head term is a wildcard ``_``: In that case no argument pattern are allowed.
+  We introduce a metavariable ``?m: ∀ (v0: V0) (v1: V1) ... : A`` where ``v0``,
+  ``v1``, ... are all pattern variables introduced up to now and the pattern
+  ``p`` is elaborated as ``?m v0 v1 ...``. The elaborated pattern has the type
+  ``A`` by construction.
 
+- Head term is an identifier which is an already introduced pattern variable:
+  This is allowed only if the type of the pattern variable is unifiable with
+  ``A`` and the identifier represents an implicit argument. The implicitness is
+  necessary in order to have some unification which will verify the sameness of
+  the pattern in both positions.
 
-Hints for elaboration of ``p: A``:
+- Head term is an identifier which is not a constructor of the type ``A``: In
+  that case no argument pattern are allowed. We introduce a new pattern variable
+  ``v`` of type ``A``. The elaborated pattern has the type ``A`` by
+  construction.
 
-1. The elaborator looks at the head term in
-``p`` (note that ``p`` is always a head term followed by zero or more argument
-pattern).
+- Head term is an indentifier which is a constructor of the inductive type
+  ``A``. The implicit arguments which represent the parameters of the inductive
+  type have to match exactly the parameters of the inductive type ``A``.
 
-    - Head term is a constant: For a number ``A`` has to be a numerical type.
-      For a character ``A`` has to be ``Char``. For a string ``A`` has to be
-      ``String``. Constants cannot have argument pattern.
+  Then we construct recursively each argument pattern of the constructor
+  arguments.
 
-    - Head term is the wildcard ``_``: ``A`` can be any type. The pattern is treated
-      as a variable pattern and no argument pattern are possible.
-
-    - Head term is an identifier (operator): If ``A`` is an inductive type and
-      the identifier is the name of one of the constructors of ``A``, then the
-      identifier is treated as the corresponding constructor of the type.
-      Otherwise the identifier is treated as a variable pattern an therefore
-      cannot have argument pattern.
-
-
-2. Argument pattern: One or more argument pattern can only be present if the
-   head term is an identifier/operator which is a constructor of the inductive
-   type ``A``.
-
-    - The parameters of the inductive type ``A`` are the first implicit
-      arguments of the constructor. Parameters are treated as constants and if
-      present in the constructor arguments then they have to match exactly (or
-      be the wildcard ``_`` which the elaborator instantiates with the
-      corresponding parameter in ``A``).
-
-    - Non-present implicit arguments of the constructor which are not parameters
-      are instantiated by the elaborator as variables.
-
-    - Argument pattern have a required type which is uniquely determined by the
-      type of the constructor argument in the definition of the inductive type
-      (parameters properly instantiated). Therefore we have a required typing
-      judgement of the form ``q: B`` where ``q`` is the argument pattern and
-      ``B`` is the required type of the corresponding constructor argument.
-
-3. The *variables* in the pattern:
-
-   A variable in the pattern is either an identifier which is not a constructor
-   or the wildcard ``_``.
-
-   - A variable is a pattern variable if it is not at the position of an
-     inferable constructor argument.
-
-   - Pattern variables have to be different identifiers or the wildcard ``_``.
-     If the pattern variable is the wildcard, then the elaborator generates a
-     new variable different from all other pattern variables.
-
-   - An inferable constructor argument cannot be a pattern variable. If it is an
-     identifier, it has to be an already introduced pattern variable.
-
-   - If an inferable constructor argument is not present or it is present as the
-     wildcard ``_``, then the elaborator introduces a metavariable which will be
-     instantiated during unification.
-
-   - Pattern variables can be used in subsequent pattern and in the expressions
-     of the pattern clauses.
-
-   - Each top level pattern has an actual type and a required type. The required
-     type is the type of the formal argument of the pattern match expression
-     corresponding to the top level pattern with the variables of the type
-     properly substituted. The required and the actual type are unified by the
-     elaborator. In case of success the metavariables are instantiated. In case
-     of failure the pattern clause is not welltyped.
-
-Some examples::
-
-    case
-        { ∀ {n: ℕ} (eq: zero = succ n): False }
-
-        λ {i} (identical {ℕ} {i}) := ...
-        -- |              |   |
-        -- |              \----> parameters
-        -- v
-        -- pattern variable
-
-The identifier ``i`` is neither a constructor nor an inferable constructor argument, therefore it is a pattern variable. Because of the substitution ``n := i`` the required type for the second pattern is ``(=) {ℕ} zero (succ i)``. The parameters are ``ℕ`` and ``i``. They are inferred or if present must match. The actual type of the second pattern is ``(=) {ℕ} zero zero``. Unification with the required type fails. The pattern clause is not welltyped.
-
-.. code-block::
-
-    case
-        {a b: ℕ} (_: succ (succ a) ≤ succ (succ b)): a ≤ b
+  Finally we unify the actual type of the expression ``id p0 p1 ...`` with the
+  required type ``A`` and in case of success replace the variable ``x`` in
+  the type by the elaborated expression ``id p0 p1 ...``.
 
 
-        -- long form with metavariables
-        λ {i} {j} (next {?k} {?l} (next {?m} {?n} le)) := le
-        -- |   |          |    |          |    |   |
-        -- |   |          |    |          |    |   \-> pattern variables
-        -- |   |          |    |          |    |
-        -- |   |          \----------------------> metavariables
-        -- \-----> pattern variables
+After the successful elaboration of all pattern there might remain some
+unassigned metavariables. Unassigned metavariables ``?m`` occur only in the form
+``?m v0 v1 ...`` where ``v0``, ``v1`` are pattern variables which existed at the
+point of the introduction of the metavariable. For each pattern ``?m v0 v1 ...``
+we introduce a new pattern variable of the correponding type and replace the
+pattern by the pattern variable.
 
-
-        -- long form without metavariables
-        λ {i} {j} (next {succ i} {succ j} (next {i} {j} le)) := le
-
-        -- short form
-        λ (next (next le)) := le
-
-- ``i`` and ``j`` are definitely pattern variables. If not present, the
-  elaborator generates them.
-
-- ``k``, ``l``, ``m`` and ``n`` are not pattern variables. I.e. if present, they
-  have to be metavariables or the wildcard or expressions involving already
-  present pattern variables.
-
-- The metavariables are instantiated by the following unification problems::
-
-    succ (succ i) ≤ succ (succ j)           -- required type
-    succ ?k       ≤ succ ?l                 -- actual type
-    -- ~~> ?k, ?l := succ i, succ j
-
-    succ i  ≤ succ j                        -- required type
-    succ ?m ≤ succ ?n                       -- actual type
-    -- ~~> ?m, ?n := i,j
+As a last step the expression ``e`` has to be elaborated with the required type
+``R``. Note that at that point of the elaboration all variables in the type of
+the whole pattern match expression have already been replaced by expressions
+depending only on pattern variables.
 
 
 
