@@ -270,7 +270,7 @@ Example: List append and reverse
         λ []        :=  []
         λ (x :: xs) :=  append (reverse xs) [x]
 
-.. code-block::
+.. code-block:: javascript
 
     function append (xs, ys) {
         switch(xs[0]) {
@@ -339,7 +339,7 @@ for all valid pattern match expressions.
 A tail recursive function can be compiled to a javascript loop.
 
 
-.. code-block::
+.. code-block:: javascript
 
     function f (p1, p2, ..., a1, a2, ...) {
         var state =                     // represents stack
