@@ -11,3 +11,5 @@ All the sections of this chapter are very DRAFT.
     hoare_swierstra
     wellfounded_recursion
     group_theory
+    records
+    platforms
