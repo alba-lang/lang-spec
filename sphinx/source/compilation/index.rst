@@ -13,8 +13,8 @@ a set of modules. A reference to a module has the form ::
 
     author.package.name
 
-where ``author.package`` uniquely indentify the package. The author has to be a
-valid github user and the package is the name of the repository.
+where ``author.package`` uniquely indentifies the package. The author has to be
+a valid github user and the package is the name of the repository.
 
 Package dependencies and module dependencies have to be noncircular. The *alba*
 packages must not depend on any other packages. The package ``alba.core``
@@ -64,7 +64,7 @@ For all global declarations the elaborator adds the default universe::
 
     {u: Level}
 
-All terms `Any` are elaborated in the default universe i.e. ``Any`` is
+All terms ``Any`` are elaborated in the default universe i.e. ``Any`` is
 elaborated as ``Any 0`` and it type is ``Any 1``. In case that the default
 universe ``u`` is not used, i.e. there is no ``Any`` in the gobal declaration
 without a universe specification, the default universe can be removed and the
@@ -101,7 +101,7 @@ A product has the general form::
 
     all (x: A) (y: B) ... : R
 
-We treat ``A -> B -> ... `` as a shorthand for ``all (_: A) (_: B) ...``.
+We treat ``A -> B -> ...`` as a shorthand for ``all (_: A) (_: B) ...``.
 
 The type of a product is always a sort. I.e. a product can only be successfully
 elaborated where a type is required. A product cannot be applied to arguments.
@@ -162,7 +162,7 @@ If there remain ambiguities we have to elaborate the arguments which can
 distinguish the possibilities.
 
 If we cannot resolve the ambituities neither by names space specifications nor
-by the result type nor by argument types the elaboration fails. The only
+by the result type nor by argument types then the elaboration fails. The only
 possibility to recover from this failure is when the result type could
 distinguish the ambiguity but is not yet known (it is still described by a
 metavariable). In the latter case we could resume the elaboration when the
