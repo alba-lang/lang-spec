@@ -163,6 +163,50 @@ The following encodings are used:
 Modules, Packages, ...
 ============================================================
 
+A module can be compiled into a javascript module (extension ``*.mjs``). E.g.
+
+.. code-block:: javascript
+
+    // module alba.core.list
+    function make () {
+        const List = {
+            nil: [0],
+            cons: (hd, tl) => [1, hd, tl]
+        }
+
+        function singleton (e){ return List.cons(e, List.nil)}
+
+        function append (xs, ys) {
+            switch (xs[0]) {
+                case 0:
+                    return ys
+                case 1:
+                    return List.cons(xs[1], append(xs[2], ys))
+            }
+        }
+
+        function reverse (lst) {
+            switch (lst[0]) {
+                case 0:
+                    return lst
+                case 1:
+                    return append(reverse(lst[2]), singleton(lst[1]))
+            }
+        }
+
+        return {List: List, singleton: singleton, append: append, reverse: reverse}
+    }
+
+    export const list = make ()
+
+
+A using module imports the module
+
+.. code-block:: javascript
+
+    import {alba$core$list} from 'alba.core.list.mjs'
+
+
 The compiler has to generate an object containing all used functions/constants
 used within the program. Each namespace gets its own object.
 
@@ -229,6 +273,25 @@ corresponding unicode code point.
 
 
 
+Currying (Partial Application)
+==================================================
+
+In javascript there is no partial application. If a function is called with
+missing arguments, then the arguments are initialized as ``null``.
+
+.. code-block::
+
+    append {A: Any}: List A -> List A -> List A := case
+        \ [] ys := ys
+        \ (x :: xs) ys := x :: append xs ys
+
+    -- partial application
+    append ['a', 'b', 'c']: List Char -> List Char
+
+
+In javascript::
+
+    ((ys) => append ... ys)
 
 
 Algebraic Types
@@ -250,6 +313,13 @@ E.g. to encode a list we use::
 
 
 
+.. code-block:: javascript
+
+    // encoding as an object (better readable)
+    var List = {nil: [0], cons: (hd, tl) => [1, hd, tl]}
+
+    // encoding as an array (faster access)
+    val List = [ [0], (hd, tl) => [1, hd, tl] ]
 
 
 
