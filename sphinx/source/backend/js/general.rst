@@ -170,26 +170,26 @@ A module can be compiled into a javascript module (extension ``*.mjs``). E.g.
     // module alba.core.list
     function make () {
         const List = {
-            nil: [0],
-            cons: (hd, tl) => [1, hd, tl]
+            nil: ['nil'],
+            cons: (hd, tl) => ['cons', hd, tl]
         }
 
         function singleton (e){ return List.cons(e, List.nil)}
 
         function append (xs, ys) {
             switch (xs[0]) {
-                case 0:
+                case 'nil':
                     return ys
-                case 1:
+                case 'cons':
                     return List.cons(xs[1], append(xs[2], ys))
             }
         }
 
         function reverse (lst) {
             switch (lst[0]) {
-                case 0:
+                case 'nil':
                     return lst
-                case 1:
+                case 'cons':
                     return append(reverse(lst[2]), singleton(lst[1]))
             }
         }
@@ -344,7 +344,7 @@ Example: List append and reverse
 
     function append (xs, ys) {
         switch(xs[0]) {
-        case 0:
+        case 'nil':
             return ys
         default:
             return [1, xs[1], append (xs[2], ys)]
@@ -353,7 +353,7 @@ Example: List append and reverse
 
     function reverse (xs) {
         switch (xs[0]) {
-        case 0:
+        case 'nil':
             return xs
         default:
             return append (reverse (xs[2]), [1, xs[1], [0]])
@@ -424,7 +424,7 @@ A tail recursive function can be compiled to a javascript loop.
         ...
         for(;;) {
             switch (a1[0]) {            // might be deeper nested
-            case 0:
+            case 'nil':
                 return e1               // non recursive call
             ...
             case 5:
@@ -481,7 +481,7 @@ final result of the function can be returned.
     function foldLeft (f, b, xs) {
         for (;;) {
             switch (xs[0]) {
-            case 0:
+            case 'nil':
                 return b
             default:
                 b  = f(xs[1], b)        // updates must be done in parallel!
@@ -550,15 +550,15 @@ The compiler generates the following javascript functions
     function even_odd (a) {
         for(;;){
             switch (a[0]) {             // 'even'
-            case 0:
+            case 'nil':
                 switch (a[1][0]) {
-                case 0:
+                case 'nil':
                     return true
                 default:
                     a = [ 1, a[1][1] ]
             default:                    // 'odd'
                 switch (a[1][0]) {
-                case 0:
+                case 'nil':
                     return fase
                 default:
                     a = [ 0, a[1][1] ]
@@ -605,7 +605,7 @@ loop.
     function iter (b) {
         for(;;) {
             switch (b[0]){
-            case 0:
+            case 'nil':
                 return b[1]         // return content
             default:
                 b[1]()              // compute next bounce
@@ -704,7 +704,7 @@ function ``fCPS`` to a javascript function is straightforward.
         }
         while(true){
             switch (xs[0]){
-                case 0:
+                case 'nil':
                     return k(ys)
                 default:
                     k  = nextK(xs,k)
@@ -720,7 +720,7 @@ function ``fCPS`` to a javascript function is straightforward.
         }
         while(true) {
             switch (xs[0]){
-                case 0:
+                case 'nil':
                     return k ([0])
                 default:
                     k = nextK(xs,k)
