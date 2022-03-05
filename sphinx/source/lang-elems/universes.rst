@@ -208,6 +208,36 @@ This eliminates the need to define e.g. tuples with two universe levels::
 
 
 
+Heterogeneous Lists
+============================================================
+
+Example from Idris.
+
+.. code-block::
+
+    type
+        HList: List Any -> Any
+    :=
+        []:   HList []
+        (::): T -> HList TS -> HList (T :: TS)
+
+
+    type
+        ElemAt: Natural -> Any -> List Any -> Any
+    :=
+        atZero {T TS}: ElemAt zero T (T :: TS)
+
+        atSucc {k T U TS}: ElemAt k T TS -> ElemAt (succ k) T (U :: TS)
+
+    lookup
+        (i: Natural) (T: Any) (TS: List Any)
+        : ElemAt i T TS -> HList TS -> T
+    := case
+        \ atZero (x :: xs) := x
+        \ atSucc
+        ????
+
+
 Draft
 ========================================
 
