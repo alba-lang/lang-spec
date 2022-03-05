@@ -811,3 +811,56 @@ Transformation into canonical form
         []        _   := []
         (x :: xs) []  := []
         (x :: xs) (y :: ys) := exp
+
+
+
+
+Modified Pattern Compiler
+============================================================
+
+Let's revisit the example::
+
+    (<=?): Natural -> Natural -> Bool := case
+        (succ n)    (succ m)    := n <=? m
+        zero        _           := true
+        _           _           := false
+
+The first and the second case are inverted. Since the constructors are
+different, we can swap them::
+
+    zero        _           := true
+    (succ n)    (succ m)    := n <=? m
+    _           _           := false
+
+
+Now for the first argument sufficient cases are available. Looking only at the
+first argument, the last case is redundant. However the second argument still
+needs a case for ``zero``. I.e. we have to factor out the corresponding case::
+
+    zero        _           := true
+    (succ n)    (succ m)    := n <=? m
+    _           zero        := false
+    _           _           := false
+
+
+We cannot yet swap. Before we have to put in the third line the same constructor
+as in the previous line because we don't have catch all cases (i.e. variable
+pattern) not as the last case.::
+
+    -- split
+    zero        _           := true
+    (succ n)    (succ m)    := n <=? m
+    (succ n)    zero        := false
+    _           _           := false
+
+    -- and then swap
+    zero        _           := true
+    (succ n)    zero        := false
+    (succ n)    (succ m)    := n <=? m
+    _           _           := false
+
+Now the last case is unreachable and can be deleted::
+
+    zero        _           := true
+    (succ n)    zero        := false
+    (succ n)    (succ m)    := n <=? m
