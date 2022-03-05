@@ -591,3 +591,223 @@ A similar reasoning applies to the second missing case::
     []: Vector ℕ (succ j)           -- required typing judgement
     []: Vector ℕ zero               -- actual typing judgment
     -- unsatisfiable !!
+
+
+
+
+
+
+Pattern Match Compiler
+============================================================
+
+A pattern expression is a function with one or more arguments. In order to
+execute an pattern match expression in the runtime efficiently, the pattern
+match expression has to be compiled into a branching with e.g. a switch case.
+
+Each branching step can decide only on one object by looking at the tag.
+
+
+.. code-block::
+
+    -- In the source code
+    (<=?): Natural -> Natural -> Bool := case
+        (succ n)    (succ m)    := n <=? m
+        zero        _           := true
+        _           _           := false
+
+    -- More efficient
+    (<=?): Natural -> Natural -> Bool := case
+        zero :=
+            \ _ := true
+        (succ n) := case
+            zero :=
+                false
+            (succ m) :=
+                n <=? m
+
+Compilation to javascript:
+
+.. code-block:: javascript
+
+    function le (a, b) {
+        switch (a[0]) {
+            case 'zero':
+                return true
+            case 'succ':
+                switch (b[0]){
+                    case 'zero':
+                        return false
+                    case 'succ':
+                        return le (a[1], b[1])
+                }
+        }
+    }
+
+In order to get the more efficient form  we can transform the original cases
+into its canonical form.
+
+.. code-block::
+
+   -- original
+        (succ n)    (succ m)    := n <=? m
+        zero        _           := true
+        _           _           := false
+
+    -- swap
+        zero        _           := true
+        (succ n)    (succ m)    := n <=? m
+        _           _           := false
+
+    -- split
+        zero        _           := true
+        (succ n)    (succ m)    := n <=? m
+        zero        _           := false
+        (succ _)    _           := false
+
+    -- swap
+        zero        _           := true
+        zero        _           := false
+        (succ n)    (succ m)    := n <=? m
+        (succ _)    _           := false
+
+    -- remove shadowed
+        zero        _           := true
+        (succ n)    (succ m)    := n <=? m
+        (succ _)    _           := false
+
+    -- split
+        zero        _           := true
+        (succ n)    (succ m)    := n <=? m
+        (succ _)    zero        := false
+        (succ _)    (succ _)    := false
+
+    -- swap
+        zero        _           := true
+        (succ _)    zero        := false
+        (succ n)    (succ m)    := n <=? m
+        (succ _)    (succ _)    := false
+
+    -- remove shadowed
+        zero        _           := true
+        (succ _)    zero        := false
+        (succ n)    (succ m)    := n <=? m
+
+This pattern match can be directly compiled into the nested branching where all
+cases are covered. I.e. the pattern match is exhaustive. Each of the original
+clauses occurs at least once, therefore there are no non-reachable clauses.
+
+
+.. code-block::
+
+    nodups: List Nat -> List Nat := case
+        (x :: y :: tl) :=
+            if x =? y then res else y :: res where
+                res := y :: tl
+        xs :=
+            xs
+
+    nodups: List Nat -> List Nat := case
+        [] :=
+            []
+        (x :: xs) :=
+            inspect xs case
+                [] :=
+                    [x]
+                (y :: tl) :=
+                    if x =? y then res else y :: res where
+                        res := y :: tl
+
+
+
+Transformation into canonical form:
+
+.. code-block::
+
+    -- original
+        (x :: y :: tl)  := exp
+        xs              := xs
+
+    -- split
+        (x :: y :: tl)  := exp
+        []              := []
+        (x :: xs)       := x :: xs
+
+    -- swap
+        []              := []
+        (x :: y :: tl)  := exp
+        (x :: xs)       := x :: xs
+
+    -- split
+        []              := []
+        (x :: y :: tl)  := exp
+        (x :: [])       := x :: []
+        (x :: y :: tl)  := x :: y :: xs
+
+    -- swap
+        []              := []
+        (x :: [])       := x :: []
+        (x :: y :: tl)  := exp
+        (x :: y :: tl)  := x :: y :: xs
+
+    -- remove shadowed
+        []              := []
+        (x :: [])       := x :: []
+        (x :: y :: tl)  := exp
+
+
+.. code-block::
+
+    map2 {A B C: Any} (f: A -> B -> C): List A -> List B -> List C
+    := case
+        (x :: xs) (y :: ys) :=
+            f x y :: map2 xs xs
+        _ _ :=
+            []
+
+    map2 {A B C: Any} (f: A -> B -> C): List A -> List B -> List C
+    := case
+        [] _ :=
+            []
+        (x :: xs) :=
+            case
+                [] :=
+                    []
+                (y :: ys) :=
+                    f x y :: map2 xs ys
+
+
+
+Transformation into canonical form
+
+.. code-block::
+
+    -- original
+        (x :: xs) (y :: ys) := exp
+        _ _  := []
+
+    -- split
+        (x :: xs) (y :: ys) := exp
+        []        _  := []
+        (x :: xs) _  := []
+
+    -- swap
+        []        _  := []
+        (x :: xs) (y :: ys) := exp
+        (x :: xs) _  := []
+
+    -- split
+        []        _  := []
+        (x :: xs) (y :: ys) := exp
+        (x :: xs) []  := []
+        (x :: xs) (y :: ys) := []
+
+    -- swap
+        []        _   := []
+        (x :: xs) []  := []
+        (x :: xs) (y :: ys) := exp
+        (x :: xs) (y :: ys)  := []
+
+    -- remove shadowed
+        []        _   := []
+        (x :: xs) []  := []
+        (x :: xs) (y :: ys) := exp
