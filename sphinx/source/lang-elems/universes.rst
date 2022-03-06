@@ -224,18 +224,26 @@ Example from Idris.
 
     type
         ElemAt: Natural -> Any -> List Any -> Any
+            -- ElemAt i T TS: The 'i'th element of list 'TS' is 'T'.
     :=
         atZero {T TS}: ElemAt zero T (T :: TS)
 
         atSucc {k T U TS}: ElemAt k T TS -> ElemAt (succ k) T (U :: TS)
 
     lookup
-        (i: Natural) (T: Any) (TS: List Any)
-        : ElemAt i T TS -> HList TS -> T
+        {T: Any} {TS: List Any}
+        : all {i}: ElemAt i T TS -> HList TS -> T
     := case
-        \ atZero (x :: xs) := x
-        \ atSucc
-        ????
+        \ atZero        (x :: xs) :=
+            x
+        \ (atSucc atk)  (x :: xs) :=
+            lookup atk xs
+
+Note that types are erased in the runtime. Therefore an object of type ``ElemAt
+i T TS`` is only the number ``i`` i.e. we are looking up the ``i``\ th element
+of the list with ``lookup at_i hlst``.
+
+
 
 
 Draft
