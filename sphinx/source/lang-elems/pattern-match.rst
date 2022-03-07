@@ -245,6 +245,7 @@ depending only on pattern variables.
 Canonical Forms
 ================================================================================
 
+
 The transformation into canonical form works by case splitting on variable
 pattern, reordering of the pattern clauses and dropping of non reachable
 clauses.
@@ -262,10 +263,74 @@ The pattern in focus of two subsequent clauses is the first pattern on which
 both clauses are different. If there is no focal pattern, then the second one is
 unreachable.
 
+.. code::
+
+    -- Example 1:
+    \ p1 p2 ... zero     ...        := ...
+    \ p1 p2 ... (succ n) ...        := ...
+    --          ^ focal point
+
+    -- Example 2:
+    \ p1 p2 ... (succ n)        ...        := ...
+    \ p1 p2 ... (succ (succ m)) ...        := ...
+    --                ^ focal point
+
+
 The focal point of two pattern is the first subpattern when scanned from left to
 right where they are different. The difference can be because of two different
 constructors at the focal point or a constructor and a variable at the focal
 point.
+
+
+Reorder:
+
+    - If both clauses have different constructors at the focal point, then the order
+      does not matter (because at most one of them can succeed).
+
+    - If one clause has a constructor and the other a variable at the focal point,
+      then the order is significant. Both can succeed on the constructor but produce
+      different results.
+
+    - If both have a variable at the focal point, then the order is significant.
+      Both can succeed on all constructors but produce different results.
+
+
+Specialization of variables:
+
+    Assume ``c(x)`` is a clause which has the variable ``x`` at a certain
+    pattern position. We can always convert this clause into the two
+    semantically equivalent clauses::
+
+        c(x:=p)         -- replace 'x' by some constructor pattern
+        c(x)
+
+    We can use such a splitting to generate missing clauses. Let's assume we
+    have two clauses ``c1`` and ``c2``::
+
+        c1(p1, p2, ... , pn, qi)
+        c2(x1, x2, ... , xn, y)
+
+    such that::
+
+        c1(p1,     p2,     ... , pn,     qi)
+        c2(x1:=p1, x2:=p2, ... , xn:=pn, y)
+        --                               ^ focal point
+
+    have a focal point at ``y / qi``. In that case the following three clauses
+    have the same semantics as the original two clauses.::
+
+        c1(p1,     p2,     ... , pn,     qi)
+        c2(x1:=p1, x2:=p2, ... , xn:=pn, y:=qj)
+        c2(x1,     x2,     ... , xn,     y)
+
+    which can be reordered without changing the semantics::
+
+        c2(x1:=p1, x2:=p2, ... , xn:=pn, y:=qj)
+        c1(p1,     p2,     ... , pn,     qi)
+        c2(x1,     x2,     ... , xn,     y)
+
+    If the pattern ``qj`` had been missing in the set of clauses before ``c1``,
+    then the first of the three can bubble up and provide the missing clause.
 
 
 
@@ -277,10 +342,9 @@ We reorder clauses in order to transform them into the lexicographic order. The
 order is induced by the order in which the constructors are introduced in the
 corresponding inductive type.
 
-We swap the order of two subsequent clauses if there is a focal pattern where
-both have a constructor at the focal point and the constructor of the second
-clause comes before the constructor in the first clause in the corresponding
-inductive type.
+We swap the order of two subsequent clauses if there is a focal point where both
+have different constructors and the constructor of the second clause comes
+before the constructor in the first clause in the corresponding inductive type.
 
 Examples of *out of order* clauses::
 
@@ -301,8 +365,8 @@ Split a Variable Pattern
 ------------------------
 
 Case splitting of a variable occurs if we have two subsequent clauses with a
-focal point where one has a constructor at the focal point and the other
-has a variable at the focal point.
+focal point where the first one has a constructor at the focal point and the
+other has a variable at the focal point.
 
 
 Examples of overlapping clauses::
