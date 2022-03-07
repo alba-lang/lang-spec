@@ -13,3 +13,4 @@ All the sections of this chapter are very DRAFT.
     group_theory
     records
     platforms
+    pattern_match
