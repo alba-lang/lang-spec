@@ -171,9 +171,9 @@ where ``p`` and ``q`` are pattern. For each argument in the type ``(x: A)``
 there is a corresponding pattern ``p``.
 
 In order to typecheck a clause we typecheck from left to right all arguments and
-finally the result type. We consider all variables in the type as substitutable.
-Each typecheck step for one argument replaces the coresponding variable in the
-type by an expression from the pattern.
+finally the result type. We consider all variables ``x``, ``y``, ... in the type
+as substitutable.  Each typecheck step for one argument replaces the
+coresponding variable in the type by an expression from the pattern.
 
 At the start of the checking we have all variables in the type unassigned. In
 the ``i``\ th step all variables before the ``i``\ th variable of the type are
@@ -213,7 +213,7 @@ In order to elaborate the pattern we have to distinguish various cases:
   ``v`` of type ``A``. The elaborated pattern has the type ``A`` by
   construction.
 
-- Head term is an indentifier which is a constructor of the inductive type
+- Head term is an identifier which is a constructor of the inductive type
   ``A``. The implicit arguments which represent the parameters of the inductive
   type have to match exactly the parameters of the inductive type ``A``.
 
