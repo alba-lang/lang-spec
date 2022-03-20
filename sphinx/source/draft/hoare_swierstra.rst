@@ -282,3 +282,48 @@ Certified Relabelling
                         λ _ _ := trueValid      -- precondition of 'return'
                 )))
                 ()
+
+
+
+Some Analysis
+================================================================================
+
+We need the following ingredients:
+
+- a state ``S``
+
+- a precondition which is a predicate over the state i.e. ``Predicate S`` which
+  is equivalent to ``S -> Prop``.
+
+    .. code::
+
+        Pre (S: Any): Any :=
+            S -> Prop
+
+- a transition relation
+
+    .. code::
+
+        Tra {S: Any} (P: Pre S) (A: Any): Any :=
+            Refine P -> (A, S) -> Prop
+
+  i.e. a transition relation ``Tra P A`` which maps each state satisfying ``P``,
+  an element of type ``A`` and a state ``S`` into a proposition. An element
+  ``T`` of type ``Tra P A`` maps each state satisfying the precondition ``P``
+  into a predicate over the computed element of type ``A`` and the poststate.
+
+
+With this we define the Hoare state monad::
+
+    HM {S A: Any} (Q: Pre S) (T: Tra Q A): Any :=
+        all (s: Refine Q):  Refine (T s)
+
+    -- compare this with the normal state monad
+
+    M (S A: Any): Any :=
+        S -> (A, S)
+
+An element of type ``Refine Q`` is a state together with a proof that the state
+satisfies the precondition ``Q``. An element of type ``Refine (T s)`` is a pair
+of type ``(A, S)`` together with a proof that the pair satisfies the
+postcondition ``T s``.
