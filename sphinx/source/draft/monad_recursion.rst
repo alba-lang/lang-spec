@@ -204,3 +204,68 @@ The following observations are important:
 - No monadic value puts a structurally greater element into the output. I.e. one
   argument of the function is either decreasing or stays the same. Therefore
   progress can never be *undone*.
+
+
+Now we can write the recursive parsing combinator ``many``.
+
+.. code::
+
+    section {A: Any} :=
+        many (p: Parser A yes): Parser (List A) no :=
+            do
+                hd := p             -- 'p' makes progress
+                tl := many          -- recursive call allowed
+            :=
+                return (hd :: tl)
+            </>
+            return []
+
+Furthermore a combinator which parses one or more of a certain item is making
+prograss as well.
+
+.. code::
+
+    section {A: Any} :=
+        many1 (p: Parser A yes): Parser (List A) yes :=
+            do
+                hd := p             -- progress
+                tl := many p        -- progress not guaranteed
+            :=
+                return (p :: tl)
+
+
+
+Progress in IO
+================================================================================
+
+Let's look at a simplified IO monad:
+
+.. code::
+
+    IO: Any -> Progress -> Any
+
+    section {A B: Any} {i j: Progress}
+    :=
+        return: A -> IO A no
+        (>>=) : IO A i -> (A -> IO B j) -> IO B (i or j)
+        getc: IO Char yes           -- reading is progress
+        putc: Char -> IO Unit no    -- writing not
+        eof:  IO A i -> IO B j -> IO A (i and j)
+
+
+A program to copy input to output.
+
+.. code::
+
+    copy: IO Unit no :=
+        do
+            ch := getc          -- progress
+            _  := putc ch
+        :=
+            copy                -- recursion allowed
+        |>
+        eof (return ())
+
+        do [ch := getc, _ := putc ch] copy |> eof (return ())
+
+        do [putc getc] copy |> eof (return ())
