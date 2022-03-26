@@ -327,3 +327,138 @@ An element of type ``Refine Q`` is a state together with a proof that the state
 satisfies the precondition ``Q``. An element of type ``Refine (T s)`` is a pair
 of type ``(A, S)`` together with a proof that the pair satisfies the
 postcondition ``T s``.
+
+
+
+Example: Open File Descriptors
+================================================================================
+
+Many IO functions can be called only with an open file descriptor. E.g. a read or
+a write function to a file can be called only with a file descriptor which is
+open for read or write. The state of IO be described e.g. by
+
+.. code::
+
+    State: Any :=
+        List ((FD, String, Mode))
+        --     |   |       ^ read, write, ...
+        --     |   *- file name
+        --     *- file descriptor
+
+In order to keep things simple we tacitely assume that a filedescriptor is never
+entered twice i.e. that the list represents a finite map from filedescriptors to
+pairs of filename and io mode.
+
+
+The IO monad has three arguments: The result type, a precondition and a
+transition relation::
+
+    IO {A: Any} (Q: PR) (T: TR A): Any
+
+    -- where
+    PR: Any :=
+        State -> Prop
+
+    TR (A: Any): Any :=
+        State -> A -> State -> Prop
+
+An IO action of type ``IO Q T`` can be started in a state ``s₀`` satisfying ``Q
+s₀``. In case of success it returns an object ``a`` in a state ``s₁`` such that
+``TR s₀ a s₁`` is satisfied.
+
+.. code::
+
+    open
+        (fn: String) (m: mode)
+        : IO
+            Top
+            (Open fn m)
+          where
+            Top _ :=
+                True       -- trivial precondition
+            Open fn m s0 fd s1 :=
+                s1 = (fd, fn, m) :: s0
+
+
+
+Example: Open File Descriptors (2)
+================================================================================
+
+
+PROBLEM:
+    with the following code: It is not expressible, that all successful open
+    return a file descriptor which is different from all other open file
+    descriptors.
+
+
+.. code::
+
+    IO {A: Any} (Q: Predicate State) (t: A -> State -> State): Any
+
+    section {A B: Any}
+    :=
+        return: A -> IO Top (\ _ s := s)
+
+        (>>)
+            (m: IO Q t)
+            (f: all (a: A): IO (Q2 a) (t2 a))
+            : (all a s: Q s -> Q2 a (t a s))
+              -> IO Q (\ a s := t2 a (t a s))
+
+
+.. code::
+
+    open
+        (fn: String) (m: Mode)
+        : IO
+            Top
+            (\ fd s := (fd, fn, m) :: s)
+
+    type OpenRead: File -> State -> Prop :=
+        basic {fd} {fn} {s}:
+            OpenRead fd ((fd, fn, read) :: s)
+        next {fd} {fd2} {fn} {m} {s}:
+            fd /= fd2 -> OpenRead fd s -> OpenRead fd ((fd2, fn, m) :: s)
+
+    getc (fd: File): IO (OpenRead fd) (\ _ s := s)
+
+
+
+Example: Open File Descriptors (3)
+================================================================================
+
+
+.. code::
+
+    type Mode := [read, write]
+
+    type
+        FD: Mode -> List Mode -> Any
+        -- An object of type 'FD read lst' is a valid open filedescriptor for
+        -- reading in the list 'lst' of modes.
+    :=
+        start {m} {l}:
+            FD m (m :: l)
+
+        next {m0} {m1} {l}:
+            FD m0 l -> FD m0 (m1 :: l)
+
+    (-):
+        all {m} (l: List Mode): FD m l -> List Mode
+    := case
+        \ (m :: l)   start      := l
+
+        \ (m :: l)   (next fd)  := m :: (l - fd)
+
+
+.. code::
+
+    -- builtins
+
+    IO {il ol: List Mode}: Any -> il ol
+
+    open {l} (name: String) (m: Mode) : IO (FD m (m :: l)) l (m :: l)
+
+    close {m} {l} (fd: FD m l) : IO Unit l (l - fd)
+
+    getc {l} (fd: FD read l): IO Char l l
