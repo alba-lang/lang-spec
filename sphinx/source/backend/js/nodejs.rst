@@ -15,6 +15,48 @@ Nodejs is the main target to compile console applications.
 Error
 ============================================================
 
+Nodejs has 4 categories of errors
+
+- Standard javascript errors like ``EvalError``, ``SyntaxError``, etc. These
+  errors shall not occur in compiled javascript code.
+
+- System errors triggered by the underlying operating systems like open a file
+  that does not exist.
+
+- User specified errors triggered by the application code.
+
+- Assertion errors.
+
+There are 3 mechanism to raise an error:
+
+- Throw an exception. Error handling via ``try {...} catch (err) {...}``.
+
+- Error first in callbacks ``(err, ...) => { if (err) {...} ...}``. A non null
+  error object indicates an error.
+
+- Event emitters emit error events ``connection.on('error', (err) => {...})``.
+
+A system error has the following mandatory and optional properties:
+
+- errno: negative numbers according to `libuv <https://docs.libuv.org/en/v1.x/errors.html>`_.
+
+- code: The string error code
+  (see `common system errors
+  <https://nodejs.org/api/errors.html>`_)
+
+- syscall: The name of the system call which failed e.g. ``open``
+
+- message: A system-provided human-readable description of the error
+
+- (opt) path: The file path when reporting a file system error
+
+- (opt) dest: The file path destination when reporting a file system error
+
+- (opt) (port, address, ...)
+
+
+
+
 Nodejs has an error object with certain fields. The most important ones are
 *syscall*, *code* and *message*. It might be best to define a record in alba
 which has these three fields ::
