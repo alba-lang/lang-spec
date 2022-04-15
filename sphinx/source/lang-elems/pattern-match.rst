@@ -766,7 +766,7 @@ clauses occurs at least once, therefore there are no non-reachable clauses.
     nodups: List Nat -> List Nat := case
         (x :: y :: tl) :=
             if x =? y then res else y :: res where
-                res := y :: tl
+                res := nodups (y :: tl)
         xs :=
             xs
 
@@ -778,8 +778,8 @@ clauses occurs at least once, therefore there are no non-reachable clauses.
                 [] :=
                     [x]
                 (y :: tl) :=
-                    if x =? y then res else y :: res where
-                        res := y :: tl
+                    if x =? y then res else y :: res
+                    where res := nodups (y :: tl)
 
 
 
