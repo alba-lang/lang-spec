@@ -147,29 +147,34 @@ Positivity:
 
 Some examples of inductive types::
 
-    class False: Prop :=            -- No constructors!
+    type False: Prop :=            -- No constructors!
 
-    class Color :=
+    type Color :=
         red
         green
         blue
 
-    class ℕ :=
+    type ℕ :=
         zero: ℕ
         succ: ℕ → ℕ
 
-    class Vector (A: Any): ℕ → Any :=
+    type Vector (A: Any): ℕ → Any :=
         []:
             Vector zero         -- Parameter 'A' does not appear
 
         (::):
             all {n}: A → Vector n → Vector n
 
-    class (≤): ℕ → ℕ → Prop :=
+    type (≤): ℕ → ℕ → Prop :=
         start {n}: zero ≤ n
         next  {n m}: n ≤ m → succ n ≤ succ m
 
-    class
+    type
+        (=) {A: Any} (x: A): A → Prop
+    :=
+        identical: (=) x
+
+    type
         Accessible {A: Any} (R: A → A → Prop): A → Prop
     :=
         access {x}: (all {y}: R x y → Accessible y) → Accessible x
