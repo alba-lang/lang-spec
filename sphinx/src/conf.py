@@ -54,7 +54,7 @@ html_theme = 'sphinx_rtd_theme'
 
 html_theme_options = {
     #'fixed_sidebar': 'true',
-    'analytics_id': 'UA-168044895-2'
+#    'analytics_id': 'UA-168044895-2'
 }
 
 
