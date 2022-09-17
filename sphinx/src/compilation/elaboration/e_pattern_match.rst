@@ -108,13 +108,12 @@ In order to reduce the expression we have to distinguish the following 2 cases:
 
     .. code::
 
-        pi = (y := c y1 y2 ...)             -- constructor pattern doesn't need parameters
+        pi = (y := c {q1} {q2} ... y1 y2 ...)
         a1 = c {q1} {q2} ... b1 b2 ...
 
-    Note that a constructor pattern doesn't need the parameters of the inductive
-    type. The parameters are the same for all constructors and are implicitely
-    determined by the specific inductive type. The pattern match expression
-    reduces to
+    Note that the parameters in the pattern and the argument have to be
+    equivalent. Otherwise the pattern match expression wouldn't be welltyped.
+    The pattern match expression reduces to
 
     .. code::
 
@@ -260,6 +259,13 @@ Pattern is a constructor pattern:
 
     - Make the substitution ``R[x := c q p1 p2 ...]``.
 
+
+At the end of the elaboration of the patterns we have for a pattern clause::
+
+    G  = [v1: V1, v2: V2, ...]      -- a sequence of pattern variables
+    ps = [p1, p2, ... ]             -- a sequence of elaborated pattern
+
+It remains to elaborate the right hand side of the pattern clause.
 
 
 

@@ -16,7 +16,7 @@ a set of modules. A reference to a module has the form ::
 
     author.package.name
 
-where ``author.package`` uniquely indentifies the package. The author has to be
+where ``author.package`` uniquely identifies the package. The author has to be
 a valid github user and the package is the name of the repository.
 
 Package dependencies and module dependencies have to be noncircular. The *alba*
@@ -57,7 +57,7 @@ The following are valid sorts and their corresponding types::
     Level                       : Any omega
     --                                  ^-- cannot appear in user code
     Prop                        : Any 0
-    Any 10                      : Any 10
+    Any 10                      : Any 11
     Any (u + 4)                 : Any (u + 5)
     Any (max u (v + 3) z)       : Any (max u (v + 3) z + 1)
 
@@ -68,7 +68,7 @@ For all global declarations the elaborator adds the default universe::
     {u: Level}
 
 All terms ``Any`` are elaborated in the default universe i.e. ``Any`` is
-elaborated as ``Any 0`` and it type is ``Any 1``. In case that the default
+elaborated as ``Any 0`` and its type is ``Any 1``. In case that the default
 universe ``u`` is not used, i.e. there is no ``Any`` in the gobal declaration
 without a universe specification, the default universe can be removed and the
 declaration is not universe polymorphic.
