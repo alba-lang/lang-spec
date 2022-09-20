@@ -81,7 +81,7 @@ floating point numbers can safely represent integer numbers *n* only if
 
 .. code-block:: javascript
 
-    Number.MAX_SAFE_INTEGER == Math.pow(2,31) - 1  // 9_007_199_254_740_991
+    Number.MAX_SAFE_INTEGER == Math.pow(2,53) - 1  // 9_007_199_254_740_991
     Number.MIN_SAFE_INTEGER == - Number.MAX_SAFE_INTEGER
 
 Overflow is not handled correctly in the sense of modulo arithmetic. Adding 1 to
@@ -126,7 +126,7 @@ Big Numbers (BigInt)
 
 Javascript has ``BigInt``. Objects of that type implement arbitrarily sized
 whole numbers. BigInt literals are just numbers with the suffix *n* (e.g.
-``100n, 0n, -1n``.
+``100n, 0n, -1n``).
 
 All modern browsers and nodejs support BigInts.
 
