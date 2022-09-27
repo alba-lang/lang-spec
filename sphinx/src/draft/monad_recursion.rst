@@ -121,6 +121,11 @@ combinator has made progress.
         \ yes i   := i
         \ no  _   := no
 
+The progress indicator is used as an index to a type e.g. ``Parser A yes`` is
+the type of a parser which returns an object of type ``A`` in the success case
+and is guaranteed to make progress in the success case.
+
+As an example we study a monadic parser with the following signature
 
 .. code::
 
@@ -129,7 +134,9 @@ combinator has made progress.
                                         -- definition with a 'Progress'
                                         -- argument.
 
-        section {A B: Any} {i j: Progress} :=
+        section
+            {A B: Any} {i j: Progress}
+        :=
             run: String -> Parser A i -> (Maybe A, String)
 
             return: A -> Parser A no        -- no progress
@@ -145,38 +152,122 @@ combinator has made progress.
                 -- Operation with guaranteed progress in the success case
 
     :=
+        -- see below
+
+In the implementation we first define the type ``Parser``:
+
+.. code::
+
+        -- Implementation of the module "Parser Monad"
         Parser (A: Any) (i: Progress): Any
         :=
             String -> (Maybe A, String)     -- 'i' is not used!
 
-        section {A B: Any} {i j: Progress} :=
-            run s p :=
+
+I.e. a ``Parser A i`` is a function which takes a string argument and returns a
+``Maybe A`` and a string.
+
+
+The following functions might need some standard arguments. Therfore we put all
+the standard arguments into a section.
+
+.. code::
+
+        section
+            {A B: Any} {i j: Progress}
+        :=
+            ...
+
+The call ``run s p`` executes the parser ``p`` on the input string ``s``.
+
+.. code::
+
+            run (s: String) (p: Parser A i): (Maybe A, String)
+            :=
                 p s
 
-            return a s := (just a, s)
+The compiler has to guarantee that ``p`` is a terminating function. The only
+argument to the function is a string. In case of recursion it has to decrease
+the imput string.
 
-            (>>=) p f s0 :=
-                -- This operation defines success and failure.
-                inspect p s case
-                    \ (just a, s1)  := f a s1           -- success of 'p'
-                    \ (nothing, s1) := (nothing, s1)    -- failure of 'p'
+The expression ``return a`` is a parser which always succeeds and does not give
+any guarantee for progress. Therefore the compiler accepts any function.
 
-            (</>) p q s0 :=
-                inspect p s0 case
-                    \ (nothing, _)  := q s0     -- 'p' fails, try 'q'
-                    \ x             := x        -- 'p' succeeds, ready
+.. code::
 
-            char d := case
+            return (a: A): Parser A no
+            :=
+                \ s := (just a, s)
+
+``fail`` is a parser which always fails and does not give any guaratee for
+progress.
+
+.. code::
+
+            fail: Parser A no
+            :=
+                \ s := (nothing, s)
+
+The monadic expression ``p >>= f`` receives two arguments. A parser ``p`` and a
+function ``f`` which can operate on the result of the parser ``p`` in case of
+success. It has type ``Parser B (i or j)``. The monadic operator ``>>=`` is a
+sequence operator. It executes ``p`` and ``f a`` in sequence, if ``p`` succeeds.
+Therefore the parser makes progress, if either ``p`` or ``f a`` makes progress
+(or both). The compiler regards the branch in which the function ``f`` is called
+as a success case. I.e. it looks into the return type and tries to find an
+inductive type. If there are failure cases the body of ``>>=`` must have a
+pattern match expression and the failure branch (in which ``f`` is not called)
+must identify the constructor of the corresponding type which identifies the
+failure case.
+
+.. code::
+
+            (>>=) (p: Parser A i) (f: A -> Parser B j): Parser B (i or j)
+            :=
+                \ s0 :=
+                    -- This operation defines success and failure.
+                    inspect p s0 case
+                        \ (just a, s1)  := f a s1           -- success of 'p'
+                        \ (nothing, s1) := (nothing, s1)    -- failure of 'p'
+
+Here the compiler can see that the return type ``(Maybe A, String)`` contains
+the type ``Maybe A`` and the constructor ``just`` identifies the success case
+and the constructor ``nothing`` identifies the failure case.
+
+
+The monadic value ``char d`` has type ``Parser Char yes``. The function which
+implements ``char d`` has to decrease the same argument in all success cases.
+All functions which return a value of the form ``Parser _ yes`` have to be
+implemented as functions which decrease the same argument in the success case.
+
+.. code::
+
+            char (d: Char -> Bool): Parser Char yes
+            := case
                 \ [] :=
-                    -- failure; argument not increased
+                    -- failure; argument not decreased
                     (nothing, [])
                 \ (orig := c :: rest) :=
                     if c d then
                         -- success; must decrease the argument
                         (just c, rest)
                     else
-                        -- failure; argument not increased
+                        -- failure; argument not decreased
                         (nothing, orig)
+
+
+The expression ``p </> q`` first executes ``p`` and in case of failure it
+executes ``q``. It makes progress only of both ``p`` and ``q`` make progress in
+case of success because only one of them is executed with success.
+
+.. code::
+
+            (</>) (p: Parser A i) (q: Parser A j): Parser A (i and j)
+            :=
+                \ s0 :=
+                    inspect p s0 case
+                        \ (nothing, _)  := q s0     -- 'p' fails, try 'q'
+                        \ x             := x        -- 'p' succeeds, ready
 
 
 
@@ -191,7 +282,7 @@ The following observations are important:
   does a case split on the result. Only in one case the function ``f`` is
   called. This case defines the success of the monadic value ``m``. The progress
   of the operation ``m >>= f`` is given, if one of the monadic values ``m`` or
-  ``f a`` computations with progress.
+  ``f a`` is a computation with progress.
 
 - There is no restriction on operations which are specified without progress.
   The compiler accepts all definitions which are welltyped.
