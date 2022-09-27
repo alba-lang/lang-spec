@@ -35,7 +35,7 @@ is not reflected in the type.
 
         (>>=) (p: Parser A) (f: A -> Parser B): Parser B :=
             \ s :=
-                inspect p s case
+                match p s case
                     \ (just a, s2) :=
                         f a s2
                     \ (nothing, s2) :=
@@ -43,7 +43,7 @@ is not reflected in the type.
 
         (</>) (p q: Parser A): Parser A :=
             \ s :=
-                inspect p s case
+                match p s case
                     \ nothing :=
                         q s
                     \ x :=
@@ -226,7 +226,7 @@ failure case.
             :=
                 \ s0 :=
                     -- This operation defines success and failure.
-                    inspect p s0 case
+                    match p s0 case
                         \ (just a, s1)  := f a s1           -- success of 'p'
                         \ (nothing, s1) := (nothing, s1)    -- failure of 'p'
 
@@ -265,7 +265,7 @@ case of success because only one of them is executed with success.
             (</>) (p: Parser A i) (q: Parser A j): Parser A (i and j)
             :=
                 \ s0 :=
-                    inspect p s0 case
+                    match p s0 case
                         \ (nothing, _)  := q s0     -- 'p' fails, try 'q'
                         \ x             := x        -- 'p' succeeds, ready
 
