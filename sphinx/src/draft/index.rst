@@ -17,3 +17,4 @@ All the sections of this chapter are very DRAFT.
     platforms
     pattern_match
     pattern_match_compiler
+    pattern_guard
