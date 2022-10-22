@@ -131,7 +131,7 @@ Using ``List₁`` or ``List`` it is possible to construct a list of types::
 
     [Int, String, Bool] : List₁ (Any 0)
 
-    [Int, String, Bool] : List {0} (Any 0)
+    [Int, String, Bool] : List {1} (Any 0)
 
     -- because of
     Int     :   Any 0
