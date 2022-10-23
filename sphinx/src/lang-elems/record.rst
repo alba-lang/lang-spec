@@ -19,7 +19,7 @@ constructor. Therefore it is sufficient to list the arguments with their names.
 
 General form of a record definition::
 
-    record
+    record type
         Name <params>: Sort     -- The optional sort is 'Prop' or 'Any'
     :=                          -- If ommitted 'Any' is used.
         field₁: Type₁
@@ -27,7 +27,7 @@ General form of a record definition::
         ...
 
     -- equivalent inductive type
-    class
+    type
         Name <params>: Sort
     :=
         _: all (field₁: Type₁) (field₂: Type₂) ... : Name
@@ -48,7 +48,7 @@ E.g. the declaration
 
 ::
 
-    record Person :=
+    record type Person :=
         firstName: String
         lastName: String
         age: Int
@@ -56,7 +56,7 @@ E.g. the declaration
 defines the algebraic type
 ::
 
-    class Person :=
+    type Person :=
         mk: String -> String -> Person
     --  ^ just an arbitrary constructor name chosen
 
@@ -122,7 +122,7 @@ used as pattern.
 
 E.g. with the record ::
 
-    record Refine {A: Any} (P: A → Prop) :=
+    record type Refine {A: Any} (P: A → Prop) :=
         value: A
         proof: P value
 
@@ -145,12 +145,12 @@ Dependent Records
 Records can have dependent types
 ::
 
-    record Sigma {A: Any} (P: A → Prop) :=
+    record type Sigma {A: Any} (P: A → Prop) :=
         value: A
         proof: P value
 
     -- corresponding inductive type
-    class Sigma {A: Any} (P: A -> Prop) :=
+    type Sigma {A: Any} (P: A -> Prop) :=
         _ x: P x -> Sigma
 
     -- field accessor functions
