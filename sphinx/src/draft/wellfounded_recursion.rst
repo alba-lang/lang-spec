@@ -201,3 +201,55 @@ Recursion like Coq
     :=
         λ x (access h) :=
             f x (λ y rYX := recurse y (h rYX))
+
+
+
+
+
+
+Wellfounded Relations on Inductive Types
+================================================================================
+
+
+Wellfounded relation for peano numbers:
+
+.. code::
+
+    type Acc {A: Any} (R: A -> A -> Prop): A -> Prop :=
+        acc {x}: (all {y}: R y x -> Acc y) -> Acc x
+
+    type WfNat: Nat -> Nat -> Prop :=
+            -- Canonical wellfounded relation on natural numbers
+        next: all {n}: WfNat n (succ n)
+
+    WfNatWellfounded: all {n: Nat}: Acc WfNat n
+        -- Proof: 'WfNat' is wellfounded i.e. all elements of its
+        --        carrier are accessible.
+    := case {Wf}
+        \ zero := acc f where
+            f: all {y}: WfNat y zero -> Acc WfNat y :=
+                case
+                    -- no match possible
+        \ succ n := acc f where
+            f: all{y}: WfNat y (succ n) -> Acc WfNat y
+            := case
+                \ (next {n}: WfNat n (succ n) :=
+                    Wf {n}
+
+
+
+Wellfounded relation for lists and trees:
+
+.. code::
+
+    type WfList {A: Any}: List A -> List A -> Prop :=
+            -- canonical wellfounded relation for lists
+        next: all {x, xs}: WfList xs (x :: xs)
+
+    type Tree (A: Any): Any :=
+        empty: Tree
+        node:  Tree -> A -> Tree -> Tree
+
+    type WfTree {A: Any}: Tree A -> Tree A -> Prop :=
+        left:  all {l a r}: WfTree l (node l a r)
+        right: all {l a r}: WfTree r (node l a r)
