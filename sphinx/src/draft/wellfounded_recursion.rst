@@ -227,10 +227,33 @@ Unbounded Search Revisited
 ================================================================================
 
 
+We assume that the following declarations are available for natural numbers::
+
+    type ℕ :=
+        zero: ℕ
+        succ: ℕ → ℕ
+
+    type (≤): Endorelation ℕ :=
+        start {n}:  zero ≤ n
+        next {n m}: n ≤ m → succ n ≤ succ m
+
+    LowerBound (P: Predicate ℕ) (n: ℕ): Prop :=
+        ∀ {x}: P x → n ≤ x
+
+    Least (P: Predicate ℕ) (n: ℕ): Prop :=
+        LowerBound P n ∧ P n
+
+    succLowerBound
+        {P: Predicate ℕ}
+        : ∀ {x}: LowerBound P x → Not P x → LowerBound P (succ x)
+    :=
+        ...
+
+
 .. code::
 
     module
-        find (P: ℕ -> Prop): Decider P -> Exist P -> Refine P
+        find (P: ℕ -> Prop): Decider P -> Exist P -> Refine (Least P)
     :=
         section
             P: ℕ -> Prop
@@ -240,12 +263,12 @@ Unbounded Search Revisited
             type R: ℕ -> ℕ -> Prop :=
                     -- 'n' and its successor figure in the relation 'R'
                     -- if 'n' does not satisfy the predicate.
-                next {n}: not (P n) -> R n (succ n)
+                next {n}: not P n -> R n (succ n)
 
             type Via: ℕ -> Prop :=
                     -- Set of viable candidates: A number 'n' is in the
-                    -- set, if its successor in the relation 'n' is in
-                    -- the set.
+                    -- set if all its successors in the relation 'R' are
+                    -- in the set.
                 via {x}: (all {y}: R x y -> Via y) -> Via x
 
             viaP {n} (p: P n): Via n :=
@@ -253,33 +276,45 @@ Unbounded Search Revisited
                     -- is a viable candidate.
                 via (case \ next notp := contra p notp)
 
-            down: all n: Via n -> Via zero :=
+
+            stepDown {n} (v: Via (succ n)): Via n :=
+                via {n} f where
+                    f: all {m}: R n m -> Via m
+                    := case
+                        \ next _ : Via (succ n) := v
+
+            down: all {n}: Via n -> Via zero :=
                     -- Every viable candidate implies that 'zero' is
                     -- a viable candidate.
                 case
                     \ zero, v :=
                         v
-                    \ succ m, via {succ m} f :=
-                        match d m case
-                            \ left p :=
-                                down m (viaP p)
-                            \ right notp:=
-                                down m (f (next notp))
+                    \ succ m, (v: Via (succ m)) :=
+                        down (stepDown v)
 
             viaZero: Via zero :=
                     -- Zero is a viable candidate.
                 match e case
                     \ (n, p) := down n (viaP p)
 
-            findAux: all n: Decision (P n) -> Via n -> Refine P
+            findAux:
+                all n:
+                    Decision (P n)
+                    -> LowerBound P
+                    -> Via n
+                    -> Refine (Least P)
             := case
-                \ n, left p, _ :=
-                    (n, p)
-                \ n, right notp, via f :=
-                    findAux (succ n) (d (succ n)) (f (next notp))
+                \ n, left p, lb, _ :=
+                    (n, p, lb)
+                \ n, right notp, lb, via f :=
+                    findAux
+                        (succ n)
+                        (d (succ n))
+                        (succLowerBound lb notp)
+                        (f (next notp))
 
 
-            find: Refine P :=
+            find: Refine (Least P) :=
                 findAux zero (d zero) viaZero
 
 
