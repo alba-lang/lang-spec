@@ -229,28 +229,58 @@ Unbounded Search Revisited
 
 .. code::
 
-    section
-        P: ℕ -> Prop
-        d: all {x} : Decision (P x)
-        e: Exist P
+    module
+        find (P: ℕ -> Prop): Decider P -> Exist P -> Refine P
     :=
-
-        type Rel: ℕ -> ℕ -> Prop :=
-            next {x}: not (P x) -> LowerBound P x -> Rel (succ x) x
-
-        zeroAcc: Acc Rel zero
+        section
+            P: ℕ -> Prop
+            d: Decider P
+            e: Exist P
         :=
-            ???
+            type R: ℕ -> ℕ -> Prop :=
+                    -- 'n' and its successor figure in the relation 'R'
+                    -- if 'n' does not satisfy the predicate.
+                next {n}: not (P n) -> R n (succ n)
 
-        decide: all x: Decision (Least P x) (Rel (succ x) x)
-        :=
-            ???
+            type Via: ℕ -> Prop :=
+                    -- Set of viable candidates: A number 'n' is in the
+                    -- set, if its successor in the relation 'n' is in
+                    -- the set.
+                via {x}: (all {y}: R x y -> Via y) -> Via x
 
-        find: Least P :=
-            recurse (Least P) Rel zero succ (decide zero) zeroAcc
+            viaP {n} (p: P n): Via n :=
+                    -- Every number which satisfies the predicate 'P'
+                    -- is a viable candidate.
+                via (case \ next notp := contra p notp)
+
+            down: all n: Via n -> Via zero :=
+                    -- Every viable candidate implies that 'zero' is
+                    -- a viable candidate.
+                case
+                    \ zero, v :=
+                        v
+                    \ succ m, via {succ m} f :=
+                        match d m case
+                            \ left p :=
+                                down m (viaP p)
+                            \ right notp:=
+                                down m (f (next notp))
+
+            viaZero: Via zero :=
+                    -- Zero is a viable candidate.
+                match e case
+                    \ (n, p) := down n (viaP p)
+
+            findAux: all n: Decision (P n) -> Via n -> Refine P
+            := case
+                \ n, left p, _ :=
+                    (n, p)
+                \ n, right notp, via f :=
+                    findAux (succ n) (d (succ n)) (f (next notp))
 
 
-DOES NOT YET WORK WELL!!! WE NEED AN INVARIANT!!
+            find: Refine P :=
+                findAux zero (d zero) viaZero
 
 
 
