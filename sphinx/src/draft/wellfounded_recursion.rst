@@ -187,20 +187,40 @@ accessible.
 
 
 
-Recursion like Coq
+Wellfounded Recursion
 ================================================================================
 
-.. code-block::
+In order to do wellfounded recursion we need
 
-    Accessible.recurse
+- A success predicate ``P``.
+
+- A an endorelation ``R`` which we step downward from one accessible element to
+  a lower accessible element (closer to the goal).
+
+- A start value and an iteration function for the iteration.
+
+- A decision procedure ``d`` which decides if we have reached the goal or the
+  next element is closer to the goal.
+
+
+
+.. code::
+
+    section
         {A: Any}
-        {T: A → Any}
-        {R: Endorelation A}
-        (f: ∀ x: (∀ y: R y x → T y) → T x)
-        : ∀ x: Accessible R x → T x
+        (P: A -> Prop)
+        (R: A -> A -> Prop)
+        (s: A)                  -- start of the iteration
+        (next: A -> A)          -- next iteration
+        (d:  all x: Decision (P x) (R (next x) x)
     :=
-        λ x (access h) :=
-            f x (λ y rYX := recurse y (h rYX))
+        recurse:
+            all x: Decision (P x) (R (next x) x) -> Acc R x -> Refine P
+        := case
+            \ x, left p, _ :=
+                (x, p)
+            \ x, right r, acc f :=
+                recurse y (d y) (f r) where y := next x
 
 
 
