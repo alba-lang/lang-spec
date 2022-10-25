@@ -210,8 +210,7 @@ In order to do wellfounded recursion we need
         {A: Any}
         (P: A -> Prop)
         (R: A -> A -> Prop)
-        (s: A)                  -- start of the iteration
-        (next: A -> A)          -- next iteration
+        (next: A -> A)
         (d:  all x: Decision (P x) (R (next x) x)
     :=
         recurse:
@@ -223,6 +222,35 @@ In order to do wellfounded recursion we need
                 recurse y (d y) (f r) where y := next x
 
 
+
+Unbounded Search Revisited
+================================================================================
+
+
+.. code::
+
+    section
+        P: ℕ -> Prop
+        d: all {x} : Decision (P x)
+        e: Exist P
+    :=
+
+        type Rel: ℕ -> ℕ -> Prop :=
+            next {x}: not (P x) -> LowerBound P x -> Rel (succ x) x
+
+        zeroAcc: Acc Rel zero
+        :=
+            ???
+
+        decide: all x: Decision (Least P x) (Rel (succ x) x)
+        :=
+            ???
+
+        find: Least P :=
+            recurse (Least P) Rel zero succ (decide zero) zeroAcc
+
+
+DOES NOT YET WORK WELL!!! WE NEED AN INVARIANT!!
 
 
 
