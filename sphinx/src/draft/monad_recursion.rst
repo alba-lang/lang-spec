@@ -306,7 +306,6 @@ Now we can write the recursive parsing combinator ``many``.
             do
                 hd := p             -- 'p' makes progress
                 tl := many          -- recursive call allowed
-            :=
                 return (hd :: tl)
             </>
             return []
@@ -321,7 +320,6 @@ prograss as well.
             do
                 hd := p             -- progress
                 tl := many p        -- progress not guaranteed
-            :=
                 return (p :: tl)
 
 
@@ -351,12 +349,10 @@ A program to copy input to output.
     copy: IO Unit no :=
         do
             ch := getc          -- progress
-            _  := putc ch
-        :=
+            putc ch
             copy                -- recursion allowed
         |>
         eof (return ())
 
-        do [ch := getc, _ := putc ch] copy |> eof (return ())
-
-        do [putc getc] copy |> eof (return ())
+        -- or in other syntax
+        do [ch := getc, putc ch, copy] |> eof (return ())
