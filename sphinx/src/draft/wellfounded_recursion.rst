@@ -4,6 +4,83 @@ Wellfounded Recursion
 
 
 
+Unbounded Search with Bound Function
+================================================================================
+
+Document with a wellfounded relation that the argument of the recursive call
+decrease a bound function with respect to the relation.
+
+.. code::
+
+    find (P: Predicate Nat) (d: Decider P) (e: Exist P): Nat :=
+        let
+            aux: all n: Decision (P n) -> LowerBound P n -> Exist P -> Nat
+            := case
+                \ n, left p, _ :=
+                    n
+                \ n, right notp, e := (v, _) :=
+                    aux (succ n) e (succ n |> d) where
+                        _ : v - (succ n) < v - n :=
+                                -- bound function 'v - n'
+                                -- '<' is wellfounded relation
+                            ...
+                            -- use 'notp' to prove 'LowerBound P (succ n)'
+                            -- ~> 'succ n < v'
+                            -- 'v < succ v' (generally true)
+                            -- ~> 'v - succ n < succ v - succ n'
+                            -- ~> 'v - succ n < v - n'
+        :=
+            aux zero (d zero) (start: all {n}: 0 <= n) e
+
+
+
+
+
+Merge Sorted Lists
+================================================================================
+
+
+In a set of arguments at least one argument decreases structurally and the
+others remain the same.
+
+.. code::
+
+    merge: List Nat -> List Nat -> List Nat := case
+        \ [], l  := l
+        \ l,  [] := l
+        \ x0 := x :: xs, y0 := y :: ys :=
+            if x <=? y then
+                x :: merge xs y0
+            else
+                y :: merge x0 ys
+
+
+
+
+
+
+Ackermann Function
+================================================================================
+
+We use the lexicographic order of the two arguments. On each recursive call
+either the first decrease or the first is the same and the second decreases.
+
+.. code::
+
+    ack: Nat -> Nat -> Nat := case
+        \ zero, m :=
+            succ m
+        \ succ n, zero :=
+            ack n (succ zero)
+        \ n0 := succ n, succ m :=
+            ack n (ack n0 m)
+
+
+
+
+
+
+
 Unbounded Search for Natural Numbers
 ================================================================================
 
