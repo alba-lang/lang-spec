@@ -4,6 +4,37 @@ Wellfounded Recursion
 
 
 
+W Types
+================================================================================
+
+
+.. code::
+
+    type W (A: Any) (B: A -> Any): Any :=
+        mw {x}: (B x -> W A B) -> W A B
+
+    Unit: Any := all (A: Any): A -> A
+    id: Unit := \ A x := x
+
+    Void: Any := all (A: Any): A
+
+    Bool: Any := all (A: Any): A -> A -> A
+    true:  Bool := \ A x y := x
+    false: Bool := \ A x y := y
+
+    Nat :=
+        W Bool (\ b := b Any Unit Void)
+    zero :=
+        mw {false} (\ v := v Nat)
+    succ (n: Nat): Nat :=
+        mw {true} (\ _ := n)
+
+
+
+
+
+
+
 Unbounded Search with Bound Function
 ================================================================================
 
