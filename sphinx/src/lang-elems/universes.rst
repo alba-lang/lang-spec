@@ -99,11 +99,11 @@ levels::
         λ []        ys  :=  ys
         λ (x :: xs) ys  :=  x :: append xs ys
 
-    class List₁ (α: Any 1): Any 1 :=
+    class List₁ (α: Any 1): Any 0 :=
         []      :   List₁
         (::)    :   α → List₁ → List₁
 
-    class List {u: Level} (α: Any u): Any u :=
+    class List {u: Level} (α: Any u): Any 0 :=
         []      :   List
         (::)    :   α → List → List
 
@@ -219,7 +219,7 @@ Example from Idris.
         HList: List Any -> Any
     :=
         []:   HList []
-        (::): T -> HList TS -> HList (T :: TS)
+        (::): all {T: Any} {TS: List Any}: T -> HList TS -> HList (T :: TS)
 
 
     type
