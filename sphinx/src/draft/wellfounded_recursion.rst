@@ -10,8 +10,8 @@ W Types
 
 .. code::
 
-    type W (A: Any) (B: A -> Any): Any :=
-        mw {x}: (B x -> W A B) -> W A B
+    type W (A: Any) (P: A -> Any): Any :=
+        mw x: (B x -> W A P) -> W A P
 
     Unit: Any := all (A: Any): A -> A
     id: Unit := \ A x := x
@@ -25,9 +25,9 @@ W Types
     Nat :=
         W Bool (\ b := b Any Unit Void)
     zero :=
-        mw {false} (\ v := v Nat)
+        mw false (\ void := void Nat)
     succ (n: Nat): Nat :=
-        mw {true} (\ _ := n)
+        mw true (\ id := id Nat n)
 
 
 
