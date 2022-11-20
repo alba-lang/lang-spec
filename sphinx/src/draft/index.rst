@@ -10,6 +10,7 @@ All the sections of this chapter are very DRAFT.
 
     hoare_swierstra
     io
+    effects
     wellfounded_recursion
     monad_recursion
     group_theory
