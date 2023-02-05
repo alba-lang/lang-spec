@@ -216,11 +216,19 @@ Example from Idris.
 .. code-block::
 
     type
-        HList: List Any -> Any
+        HList {u: Uni}: List (Any u) -> Any (u + 1)
     :=
-        []:   HList []
-        (::): all {T: Any} {TS: List Any}: T -> HList TS -> HList (T :: TS)
+        []:
+            HList []
+        (::)
+            {T: Any u} {TS: List (Any u)}
+            : T -> HList TS -> HList (T :: TS)
 
+
+    -- Note: 'List (Any u): Any (u + 1)'
+
+
+.. code::
 
     type
         ElemAt: Natural -> Any -> List Any -> Any
@@ -254,14 +262,14 @@ Draft
 
 Using universe levels it is possible to define dependent lists::
 
-    class
-        DList {u: Level} {α: Any u} (P: α → Any u): List α → Any u
+    type
+        DList {u: Level} {A: Any u} (P: A → Any u): List A → Any u
     :=
         hnil    : DList []
-        hcons   : ∀ {x: α} {xs: List α}: P x → DList xs → Dlist (x :: xs)
+        hcons   : ∀ {x: A} {xs: List A}: P x → DList xs → Dlist (x :: xs)
 
 
-Let ``α`` be ``Any 0``. This requires ``0 < u``. Then we can use ::
+Let ``A`` be ``Any 0``. This requires ``0 < u``. Then we can use ::
 
     \ (T: Any 0): Any u := T
 
@@ -273,7 +281,7 @@ for the predicate ``P``. This gives ``P ℕ ~~> ℕ``, ``P Bool ~~> Bool`` etc. 
 
 An easier to unserstand type is the type of heterogenious lists::
 
-    class
+    type
         HList {u: Level}: List (Any u) → Any (u + 1)
     :=
         []:   HList []
