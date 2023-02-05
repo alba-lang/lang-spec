@@ -265,8 +265,8 @@ Using universe levels it is possible to define dependent lists::
     type
         DList {u: Level} {A: Any u} (P: A → Any u): List A → Any u
     :=
-        hnil    : DList []
-        hcons   : ∀ {x: A} {xs: List A}: P x → DList xs → Dlist (x :: xs)
+        dnil    : DList []
+        dcons   : ∀ {x: A} {xs: List A}: P x → DList xs → Dlist (x :: xs)
 
 
 Let ``A`` be ``Any 0``. This requires ``0 < u``. Then we can use ::
