@@ -208,6 +208,38 @@ This eliminates the need to define e.g. tuples with two universe levels::
 
 
 
+Dependent Lists
+============================================================
+
+.. code::
+
+    -- All 'Any' are 'Any u' at the same universe level
+    type
+        DList {A: Any} (P: A -> Any): List A -> Any
+    :=
+        []: DList []
+        (::) {a} {as}: P a -> DList as -> DList (a :: as)
+
+
+.. code::
+
+    (+)
+        {A} {P} {as} {bs}: DList {A} P as -> DList P bs -> DList P (as :: bs)
+    := case
+        \ [], ys :=
+            ys
+
+        \ x :: xs, ys :=
+            xs + (x :: ys)
+
+        -- long form
+        \ (::) {a} {as) x xs, ys :=
+            (xs: DList P as) + ((::) {a} {bs} x ys: DList P (a :: bs))
+
+
+
+
+
 Heterogeneous Lists
 ============================================================
 

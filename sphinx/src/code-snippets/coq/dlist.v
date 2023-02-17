@@ -8,3 +8,12 @@ Polymorphic Inductive
 
 
 Print DList.
+(*
+Polymorphic Fixpoint
+    dappend (A: Type) (P: A -> Type)
+    (a: DList (list A)) (b: DList (list A))
+    : DList (list A)
+:=
+    match a with
+    | dnil => dnil
+    end.*)
