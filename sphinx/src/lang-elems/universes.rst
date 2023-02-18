@@ -311,7 +311,7 @@ for the predicate ``P``. This gives ``P ℕ ~~> ℕ``, ``P Bool ~~> Bool`` etc. 
     hcons 5 (hcons true hnil): DList (\ T := T) [ℕ, Bool]
 
 
-An easier to unserstand type is the type of heterogenious lists::
+An easier to understand type is the type of heterogenious lists::
 
     type
         HList {u: Level}: List (Any u) → Any (u + 1)
@@ -322,3 +322,22 @@ An easier to unserstand type is the type of heterogenious lists::
 Having this we can form ::
 
     [1, true]: HList [ℕ, Bool]
+
+
+
+
+
+
+Russel's Paradox
+============================================================
+
+Without universe consistency it is possible to encode Russel's paradox.
+
+.. code ::
+
+    type RSet {i: Uni}: Any i :=
+        rset {A: Any i}: (A -> RSet) -> RSet
+
+An object of type ``RSet`` lives in a universe at level ``i``, however it contains
+an object ``A`` living in a universe at level ``i + 1``. I.e. the type ``RSet``
+is not universe consistent.
