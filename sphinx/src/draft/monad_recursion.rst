@@ -39,12 +39,13 @@ is not reflected in the type.
                     \ (just a, s2) :=
                         f a s2
                     \ (nothing, s2) :=
-                        (noting, s2)
+                        (nothing, s2)
 
         (</>) (p q: Parser A): Parser A :=
             \ s :=
                 match p s case
-                    \ nothing :=
+                    \ (nothing, _) :=
+                            -- note: automatic backtracking
                         q s
                     \ x :=
                         x
@@ -199,7 +200,7 @@ any guarantee for progress. Therefore the compiler accepts any function.
             :=
                 \ s := (just a, s)
 
-``fail`` is a parser which always fails and does not give any guaratee for
+``fail`` is a parser which always fails and does not give any guarantee for
 progress.
 
 .. code::
