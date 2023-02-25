@@ -103,7 +103,7 @@ rule:
 
 
 
-Progress Indicator
+Monadic Parser with Progress Indicator
 ================================================================================
 
 
@@ -311,6 +311,23 @@ Now we can write the recursive parsing combinator ``many``.
             </>
             return []
 
+The combinator ``many`` expressed without do notation:
+
+.. code::
+
+        many (p: Parser A yes): Parser (List A) no :=
+            (
+                p >>=
+                (\ hd :=
+                    many   -- recursive call protected by progress maker 'p'
+                    >>=
+                    (\ tl := return (hd :: tl))
+                )
+            )
+            </>
+            return []
+
+
 Furthermore a combinator which parses one or more of a certain item is making
 prograss as well.
 
@@ -322,6 +339,121 @@ prograss as well.
                 hd := p             -- progress
                 tl := many p        -- progress not guaranteed
                 return (p :: tl)
+
+
+
+
+
+
+
+
+State and Continuation Monads and Progress
+================================================================================
+
+A monadic type constructor which allows recursion must be a function which has a
+state ``S`` which is threaded through all function calls and a variable type ``A``. An
+object of type ``M A yes`` returns in the success case an object of type ``A``
+decreases the state structurally. An object of type ``M A no`` returns in the
+success case an object of type ``A`` but does not guarantee that the state is
+structurally decreased.
+
+The operation ``m >>= f`` executes first ``m`` and in the success case executes
+``f a`` where ``a`` is the object returned by the monadic operation ``m``.
+
+In order for that to work the monadic type constructor must have the form
+
+.. code::
+
+    M ... (A: Any) (i: Progress): Any :=
+        S -> Res
+
+where and object of type ``Res`` is either an object containing optionally an
+object of type ``A`` and an object of type ``S`` or a function operating on an
+object of type ``A`` and an object of type ``S``.
+
+The state ``S`` must contain an inductive type. At each execution step the
+inductive type either decreases or remains the same. A combinator which makes
+progress (``yes``) must decrease the inductive object in the state structurally.
+A combinator without guaranteeing progress (``no``) either decreases the
+inductive type structurally or it remains the same. It never increases the
+object structurally.
+
+
+The following types are possible (only the essential arguments of ``M`` are
+listed here, there might be more arguments):
+
+.. code::
+
+    M (A: Any) (i: Progress): Any :=
+            -- simple state monad without failure
+        A -> A * S
+
+    M (A: Any) (i: Progress): Any :=
+            -- state monad with success and failure
+        S -> Maybe A * S
+
+    M (A: Any) (i: Progress): Any :=
+        S -> Result A Error * S
+
+    M (A: Any) (i: Progress): Any :=
+        S -> Result (A * S) Error
+
+
+    M (A: Any) (i: Progress): Any :=
+            -- continuation monad
+        S -> (Maybe A -> S -> R) -> R
+
+        -- other variants of the continuation monad
+        S -> (Result A Error -> S -> R) -> R
+
+        S -> (Result (A * S) Error -> R) -> R
+
+
+For the monadic type ``M`` there is a chaining operator ``>>=``.
+
+
+.. code::
+
+
+    -- simple state monad
+    (>>=) (m: M A i) (f: A -> M B j): M B (i or j) :=
+        \ s :=
+            match m s case
+                \ (just a, s2) :=
+                    f a s2
+                \ (nothing, s2) :=
+                    (nothing, s2)
+
+    -- continuation monad
+    (>>=) (m: M A i) (f: A -> M B j): M B (i or j) :=
+        \ s k :=
+            m   s
+                (case
+                    \ just a, s2 :=
+                            -- 'm' succeeds:
+                            -- execute 'f a' with the new state
+                            -- and the continuation
+                        f a s2 k
+                    \ nothing, s2 :=
+                            -- 'm' fails:
+                            -- execute the continuation with the new state
+                        k nothing s2)
+
+Recursion rule: In a construct of the form ``m >>= f`` recursion is allowed in
+the function ``f`` only if ``m`` or any monadic application before in the chain
+makes progress.
+
+
+In order to make recursive calls possible we need some elementary monadic
+operations which make progress i.e. some ``m: M A yes``. Such an ``m`` operates
+on a state ``s`` i.e. ``m s`` (state monad) or ``m s k`` (continuation monad)
+are monadic operations. Here is the rule:
+
+If ``m s`` returns an object of type ``A`` or ``m s k`` calls the continuation
+``k`` with an object of type ``A`` then it is obliged to decrement the state
+structurally i.e. either return a structurally smaller state or call the
+continuation with a structurally smaller state.
+
 
 
 
