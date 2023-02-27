@@ -17,6 +17,7 @@ Welcome to Alba's documentation!
     builtin/index
     intermediate/index
     compilation/index
+    platform/index
     backend/index
     draft/index
     bibliography
