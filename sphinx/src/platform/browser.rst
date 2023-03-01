@@ -279,3 +279,29 @@ A document application is occupies the whole browser page and its title.
         (S -> Subscription M)           -- subscriptions
         ->
         Browser
+
+
+
+Single Page Application
+--------------------------------------------------------------------------------
+
+.. code::
+
+    application {S M: Any}:
+        (JSValue -> Key -> Url -> S * Command M)    -- initialisation
+        ->
+        (M -> S -> S * Command M)                   -- update
+        ->
+        (S -> String * List (Html M))               -- view with title
+        ->
+        (S -> Subscription M)                       -- subscriptions
+        ->
+        (UrlRequest -> M)                           {: The user has clicked on a
+                                                       link :}
+        ->
+        (Url -> M)                                  {: Forward or backward
+                                                       movement in the history
+                                                       without changing the main
+                                                       page :}
+        ->
+        Browser
