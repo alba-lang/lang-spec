@@ -110,320 +110,207 @@ either the first decrease or the first is the same and the second decreases.
 
 
 
-
-
 Unbounded Search for Natural Numbers
 ================================================================================
 
-As an example we use the function which finds the least natural number which
-satisfies a predicate provided that a number exists which satisfies the
-predicate. In the following we use::
+For an unbounded search we have a predicate ``P: Nat -> Prop`` and a decider
+``d: Decider P`` where the call ``d n`` decides whether ``n`` satisfies the
+predicate ``P``. The task is to find the least number satisfying the predicate
+``P``.
 
-    P: Predicate Natural
-    d: all n: Decision (P n)
+This task can be done successfully if there is at least one number satisfying
+the predicate. If there is no such number a search for such a number never
+terminates.
 
-as the search predicate and the decision procedure. We want to find a function
-with the following signature::
+Formally we have to find a function with the signature
 
-    find
-        {P: Predicate ℕ}
-        : (∀ n: Decision (P n)) → Exist P → Refine (Least P)
+.. code::
+
+    find {P: Nat -> Prop} (d: Decider P): Exist P -> Refine (Least P)
     :=
         ...
 
-We assume that the following declarations are available for natural numbers::
+where an object of type ``Exist P`` is a proof that there exists a number
+satisfying ``P`` and an object of type ``Refine (Least P)`` is a number ``n``
+together with a proof that ``n`` is the least number satisfying ``P``.
 
-    class ℕ :=
-        zero: ℕ
-        succ: ℕ → ℕ
+The algorithm is quite simple:
 
-    class (≤): Endorelation ℕ :=
-        start {n}:  zero ≤ n
-        next {n m}: n ≤ m → succ n ≤ succ m
+- Set ``n`` to zero.
 
-    (<): Endorelation ℕ :=
-        λ x y := succ x ≤ y
+- loop: Check, if the number ``n`` satisfies the predicate.
 
-    leToNotLt: ∀ {x y}: x ≤ y → Not y < x :=
-        ...
+- if yes, return the number.
 
-    ltIrreflexive: ∀ {x}: x < x → False :=
-        ...
+- if no, increment the number and goto loop.
 
-    succLowerBound
-        {P: Predicate ℕ}
-        : ∀ {x}: LowerBound P x → Not P x → LowerBound P (succ x)
-    :=
-        ...
+This algorithm has the invariant:
 
-    LowerBound (P: Predicate ℕ) (n: ℕ): Prop :=
-        ∀ {x}: P x → n ≤ x
+- ``n`` is always a lower bound for all numbers which satisfy the predicate.
+  Specifically for each number ``v`` which satisfies the predicate the
+  inequality ``n <= v`` is valid.
 
-    Least (P: Predicate ℕ) (n: ℕ): Prop :=
-        LowerBound P n ∧ P n
+Furthermore if ``v`` is a number which satisfies the predicate then the distance
+between ``v`` and ``n`` i.e. ``v - n`` is decremented at each iteration by one.
+I.e. ``v - n`` is a bound function which has zero as a lower bound.
 
+The following is an incomplete implementation of the algorithm as a recursive function.
 
+.. code::
 
-The algorithm is intuitively clear. We check if the number zero satisfies the
-predicate. If yes, we have found the number. If Not we check the next number and
-iterate the function until we have found a number satisfying the predicate::
-
-    findAux
-        {P: Predicate ℕ}
-        (d: ∀ n: Decision (P n)
-        : ℕ → ℕ
-    :=
-        λ i :=
-            if d i then
-                i
-            else
-                findAux (succ i)
-
-    findAux d zero      -- returns the desired number
-
-However the function ``findAux`` is recursive and there is no decreasing
-argument in the recursive call.
-
-We use the relation::
-
-    Rel (P: Predicate ℕ): Endorelation ℕ :=
-        λ y x :=
-            succ x = y ∧ LowerBound P y
-
-
-and the inductive definition to define the accessible elements of an
-endorelation::
-
-    class
-        Accessible
-            {A: Any}
-            (R: Endorelation A)
-            : Predicate A
-    :=
-        access {x}:
-            (∀ {y}: R y x → Accessible y)
-            →
-            Accessible x
-
-Using this accessibility we can prove that an element is accessible in a
-relation either if the element has no predecessors or if all predecessors are
-accessible.
-
-
-.. code-block::
-
-    satToAccessible
-        {P: Predicate ℕ}
-        {x: ℕ}
-        (satX: P x)
-        : Accessible (Rel P) x
-    :=
-        access
-            (λ (eq,lb) := f eq lb)
-        where
-            f: ∀ {y}: succ x = y → LowerBound P y → Accessible (Rel P) y
-            :=
-                λ identical lbSuccX :=
-                    (lbSuccX satX: x < x) |> ltIrreflexive |> exFalso
-
-
-    accessibleToPredecessor
-        {P: Predicate ℕ}
-        {x: ℕ}
-        : Accessible (Rel P) (succ x) → Accessible (Rel P) x
-    :=
-        λ accSuccX :=
-            access f where
-                f: ∀ {y}: succ x = y ∧ LowerBound P y → Accessible (Rel P) y :=
-                    λ (identical, _) := accSuccX
-
-
-    accessibleToZero
-        {P: Predicate ℕ}
-        : ∀ {x}: Accessible (Rel P) x → Acessible (Rel P) zero
+    find {P: Nat -> Prop} (d: Decider P): Exist P -> Refine (Least P)
     := case
-        λ {zero} acc :=
-            acc
-        λ {succ x} accSuccX :=
-            accessibleToZero
-                x
-                (accessibleToPredecessor accSuccX)
-
-    zeroAccessible
-        {P: Predicate ℕ}
-        : Exist P → Accessible (Rel P) Zero
-    :=
-        λ sat :=
-            satToAccessible sat |> accessibleToZero
-
-
-    findAux
-        {P: Predicate ℕ}
-        (d: ∀ x: Decision (P x))
-        : ∀ x:  Decision (P x)
-                → LowerBound P x
-                → Accessible (Rel P) x
-                → Refine (Least P)
-    :=
-        λ x (left pX) lbX _ :=
-            refine x (lbX, pX)
-
-        λ x (right notPX) lbX (access f) :=
-            findAux
-                (succ x)
-                (d (succ x)A)
-                lbSuccX
-                (f (identical, lbSuccX)
+        \ exist _ :=                -- unused existence
+            aux zero (d zero)
             where
-                lbSuccX := succLowerBound lbX notPX
+                aux := case
+                    \ n, (true _) :=
+                            -- n satisfies the predicate P
+                            -- we are ready
+                        (n, _)      -- proof that 'n' is the smallest number
+                                    -- satisfying 'P' is missing
+
+                    \ n, (false _) :=
+                            -- n does not satisfy the predicate P
+                            -- the search must goon
+                        aux (succ n) (d (succ n))
+                    --  ^  illegal recursive call
+
+This incomplete implementation has several shortcomings:
+
+#. It does not exploit the invariant that at each step of the iteration the
+   number ``n`` is a lower bound for all numbers satisfying the predicate.
+
+#. In case of success (first case) it does not provide a proof that the number
+   is the smallest number satisfying the predicate.
+
+#. It does not use the fact that a number satisfying the predicate ``P`` exists.
+
+#. In the recursive case it does not decrement any argument. Therefore the
+   compiler has no evidence that the recursion is terminating.
 
 
-    find
-        {P: Predicate ℕ}
-        (d: ∀ x: Decision (P x))
-        (ex: Exist P)
-        : Refine (Least P)
-    :=
-        findAux
-            d
-            zero
-            (d zero)
-            (λ _ := start)
-            (zeroAccessible ex)
-
-
-
-
-
-Wellfounded Recursion
-================================================================================
-
-In order to do wellfounded recursion we need
-
-- A success predicate ``P``.
-
-- A an endorelation ``R`` which we step downward from one accessible element to
-  a lower accessible element (closer to the goal).
-
-- A start value and an iteration function for the iteration.
-
-- A decision procedure ``d`` which decides if we have reached the goal or the
-  next element is closer to the goal.
-
-
+The first two shortcomings can easily be resolved by providing the auxiliary
+function with an argument proving that the number ``n`` is a lower bound for the
+set of all numbers satisfying the predicate.
 
 .. code::
 
-    section
-        {A: Any}
-        (P: A -> Prop)
-        (R: A -> A -> Prop)
-        (next: A -> A)
-        (d:  all x: Decision (P x) (R (next x) x)
-    :=
-        recurse:
-            all x: Decision (P x) (R (next x) x) -> Acc R x -> Refine P
-        := case
-            \ x, left p, _ :=
-                (x, p)
-            \ x, right r, acc f :=
-                recurse y (d y) (f r) where y := next x
+    aux
+        {P: Nat -> Prop} (d: Decider P)
+        : all n: Decision (P n) -> LowerBound P n -> Refine (Least P)
+    := case
+        \ n, true nP, lbN :=
+            (n, nP, lbN)
+            --  ^^^^^^^ n satisfies P and is a lower bound, therefore
+            --          n is the smallest number satisfying P
+
+        \ n, false notNP, lbN :=
+            aux (succ n) (d (succ n)) (lowerBoundSucc lbN notNP)
+        --                             ^ invariant satisfied by (succ n)
+        --  ^ recursive call still illegal, no argument is decreasing
+
+    find {P: Nat -> Prop) (d: Decider P): Exist P -> Refine (Least P)
+    := case
+        \ exist _ :=
+            aux d zero (d zero) (zeroLowerBound P)
+
+    -- using the following definitions:
+        LowerBound (P: Nat -> Prop) (n: Nat): Prop :=
+            all {x}: P x -> n <= x
+
+        Least (P: Nat -> Prop) (n: Nat): Prop :=
+            P n /\ LowerBound P n
+
+        zeroLowerBound (P: Nat -> Prop): LowerBound P zero
+        := ...
+
+        lowerBoundSucc
+            (P: Nat -> Prop)
+            : all {n}: LowerBound P n -> Not (P n) -> LowerBound P (succ n)
+        := ...
+
+However the auxiliary function still contains an illegal recursive call where no
+argument is decreasing and therefore the compiler has no evidence that the
+recursion terminates.
 
 
 
-Unbounded Search Revisited
-================================================================================
-
-
-We assume that the following declarations are available for natural numbers::
-
-    type ℕ :=
-        zero: ℕ
-        succ: ℕ → ℕ
-
-    type (≤): Endorelation ℕ :=
-        start {n}:  zero ≤ n
-        next {n m}: n ≤ m → succ n ≤ succ m
-
-    LowerBound (P: Predicate ℕ) (n: ℕ): Prop :=
-        ∀ {x}: P x → n ≤ x
-
-    Least (P: Predicate ℕ) (n: ℕ): Prop :=
-        LowerBound P n ∧ P n
-
-    succLowerBound
-        {P: Predicate ℕ}
-        : ∀ {x}: LowerBound P x → Not P x → LowerBound P (succ x)
-    :=
-        ...
-
+For unbounded search we need the inductive type ``Acc``. The proposition ``Acc R
+x`` says that ``x`` is an accessible element of the relation ``R``. An element
+``x`` is a accessible if all its predecessors ``y`` in the relation ``R`` i.e.
+all ``y`` satisfying ``R y x`` must be accessible as well. In order to construct
+a proof of ``Acc R x`` we need a proof of ``all {y}: R y x -> Acc R y``.
 
 .. code::
 
-    module
-        find (P: ℕ -> Prop): Decider P -> Exist P -> Refine (Least P)
+    type Acc {A: Any} (R: A -> A -> Prop): A -> Prop :=
+        acc {x}: (all {y}: R y x -> Acc y) -> Acc x
+
+A relation is wellfounded if all elements of the carrier are accessible.
+
+.. code::
+
+    Wellfounded {A: Any} (R: A -> A -> Prop): Prop :=
+        all {x}: Acc R x
+
+For natural numbers the relation ``<`` is wellfounded.
+
+.. code::
+
+    lessThanWellfounded: Wellfounded (<)
     :=
-        section
-            P: ℕ -> Prop
-            d: Decider P
-            e: Exist P
-        :=
-            type R: ℕ -> ℕ -> Prop :=
-                    -- 'n' and its successor figure in the relation 'R'
-                    -- if 'n' does not satisfy the predicate.
-                next {n}: not P n -> R n (succ n)
+        ...  -- proof omitted.
 
-            type Via: ℕ -> Prop :=
-                    -- Set of viable candidates: A number 'n' is in the
-                    -- set if all its successors in the relation 'R' are
-                    -- in the set.
-                via {x}: (all {y}: R x y -> Via y) -> Via x
-
-            viaP {n} (p: P n): Via n :=
-                    -- Every number which satisfies the predicate 'P'
-                    -- is a viable candidate.
-                via (case \ next notp := contra p notp)
+I.e. for all numbers ``n`` it is possible to construct a proof of ``Acc (<) n``.
+Since all proofs are finite, it is possible to iterate over such a proof.
 
 
-            stepDown {n} (v: Via (succ n)): Via n :=
-                via {n} f where
-                    f: all {m}: R n m -> Via m
-                    := case
-                        \ next _ : Via (succ n) := v
 
-            down: all {n}: Via n -> Via zero :=
-                    -- Every viable candidate implies that 'zero' is
-                    -- a viable candidate.
-                case
-                    \ zero, v :=
-                        v
-                    \ succ m, (v: Via (succ m)) :=
-                        down (stepDown v)
+Suppose we have ``x < y`` and ``ub`` is an upper bound for both i.e. ``y <=
+ub`` is valid, then we have ``ub - y < ub - x``.
 
-            viaZero: Via zero :=
-                    -- Zero is a viable candidate.
-                match e case
-                    \ (n, p) := down n (viaP p)
+.. code::
 
-            findAux:
-                all n:
-                    Decision (P n)
-                    -> LowerBound P
-                    -> Via n
-                    -> Refine (Least P)
-            := case
-                \ n, left p, lb, _ :=
-                    (n, p, lb)
-                \ n, right notp, lb, via f :=
-                    findAux
-                        (succ n)
-                        (d (succ n))
-                        (succLowerBound lb notp)
-                        (f (next notp))
+    predLessThan: all {n: Nat}: n < succ n
+    := ...
+
+    invertLessThan
+        all {x y ub: Nat}:
+            x < y  ->  y <= ub  ->  ub - y < ub - x
+    := ...
 
 
-            find: Refine (Least P) :=
-                findAux zero (d zero) viaZero
+    lessThanWellfounded: all {n}: Acc (<) n
+    := ...
+
+.. code::
+
+    aux
+        {P: Nat -> Prop) (d: Decider P) {v} (vP: P v)
+        : all n:
+            Decision (P n)
+            -> LowerBound P n
+            -> Acc (<) (v - n)
+            -> Refine (Least P)
+    := case
+        \ n, true pN, lbN, _ :=
+            (n, pN, lbN)
+
+        \ n, false notPN, lbN, acc f :=
+            findAux (succ n) (d (succ n)) lbSuccN (f lt)
+            where
+                lt: v - succ n  <  v - n :=
+                    invertLessThan predLessThan (lbSuccN vP)
+                lbSuccN: LowerBound P (succ n) :=
+                        -- use that n does not satisfy P and n is a lower
+                        -- bound of P
+                    lowerBoundSucc lbN notPN
+
+    find {P: Nat -> Prop} (d: Decider P): Exist P -> Refine (Least P)
+    := case
+        \ exist vP :=
+            aux d vP zero (d zero) (zeroLowerbound P) lessThanWellfounded
 
 
 
