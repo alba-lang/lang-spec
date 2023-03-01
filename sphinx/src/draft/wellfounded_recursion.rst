@@ -208,7 +208,7 @@ set of all numbers satisfying the predicate.
         \ n, false notNP, lbN :=
             aux (succ n) (d (succ n)) (lowerBoundSucc lbN notNP)
         --                             ^ invariant satisfied by (succ n)
-        --  ^ recursive call still illegal, no argument is decreasing
+        --  ^ recursive call still ILLEGAL, no argument is decreasing
 
     find {P: Nat -> Prop) (d: Decider P): Exist P -> Refine (Least P)
     := case
@@ -234,13 +234,40 @@ However the auxiliary function still contains an illegal recursive call where no
 argument is decreasing and therefore the compiler has no evidence that the
 recursion terminates.
 
+From our intuition we know that the recursion is terminating. There exists a
+number ``v`` which satisfies the predicate. The current number ``n`` is
+guaranteed to satisfy ``n <= v`` because of the invariant which states that
+``n`` is a lower bound for the set of all numbers which satisfy the predicate.
+
+We increase ``n`` only if it does not satisfy the predicate. I.e. ``succ n`` is
+still a lower bound and therefore ``succ n <= v`` is satisfied. However the
+distance to ``v`` has decreased by one i.e. ``v - succ n  <  v - n`` is
+satisfied. In order to express this fact to the compiler we equip the recursive
+function ``aux`` with the additional arguments
+
+#. The number ``v`` which satisfies the predicate and a proof of this fact.
+
+#. A proof of ``Acc (<) (v - n)`` which we describe below.
+
+I.e. the function ``aux`` has now the signature
+
+.. code::
+
+    aux
+        {P: Nat -> Prop) (d: Decider P)
+        {v} (vP: P v)               -- The number v and a proof that P v is valid
+        : all n:
+            Decision (P n)
+            -> LowerBound P n
+            -> Acc (<) (v - n)      -- Decreasing argument (see below)
+            -> Refine (Least P)
 
 
-For unbounded search we need the inductive type ``Acc``. The proposition ``Acc R
-x`` says that ``x`` is an accessible element of the relation ``R``. An element
-``x`` is a accessible if all its predecessors ``y`` in the relation ``R`` i.e.
-all ``y`` satisfying ``R y x`` must be accessible as well. In order to construct
-a proof of ``Acc R x`` we need a proof of ``all {y}: R y x -> Acc R y``.
+``Acc`` is an inductive type. The proposition ``Acc R x`` says that ``x`` is an
+accessible element of the relation ``R``. An element ``x`` is a accessible if
+all its predecessors ``y`` in the relation ``R`` i.e.  all ``y`` satisfying ``R
+y x`` must be accessible as well. In order to construct a proof of ``Acc R x``
+we need a proof of ``all {y}: R y x -> Acc R y``.
 
 .. code::
 
@@ -249,40 +276,33 @@ a proof of ``Acc R x`` we need a proof of ``all {y}: R y x -> Acc R y``.
 
 A relation is wellfounded if all elements of the carrier are accessible.
 
+We use ``(<)`` as the relation. Certainly ``Acc (<) zero`` is valid because ``n
+< zero`` is unsatisfiable. We can prove that for all numbers ``n`` the
+proposition ``Acc (<) n`` is valid by inductive reasoning:
+
+#. Assume ``Acc (<) n`` is valid.
+
+#. The numbers ``x`` with ``x < succ n`` satisfy either ``x < n`` or ``x = n`` .
+
+    - In the first case ``Acc (<) x`` is valid because all predecessors of
+      ``n`` are accessible.
+
+    - In the second case ``Acc (<) x`` is valid by assumption.
+
+Therefore for natural numbers the relation ``(<)`` is wellfounded.
+
 .. code::
 
-    Wellfounded {A: Any} (R: A -> A -> Prop): Prop :=
-        all {x}: Acc R x
-
-For natural numbers the relation ``<`` is wellfounded.
-
-.. code::
-
-    lessThanWellfounded: Wellfounded (<)
+    lessThanWellfounded: all {n: Nat}: Acc (<) n
     :=
-        ...  -- proof omitted.
+        ...  -- inductive proof omitted.
 
-I.e. for all numbers ``n`` it is possible to construct a proof of ``Acc (<) n``.
-Since all proofs are finite, it is possible to iterate over such a proof.
+A proof of ``Acc (<) (v - zero)`` consists of ``v`` inductive steps and is
+therefore an inductive proof object of size ``v`` which can be decreased at each
+recursive call.
 
-
-
-Suppose we have ``x < y`` and ``ub`` is an upper bound for both i.e. ``y <=
-ub`` is valid, then we have ``ub - y < ub - x``.
-
-.. code::
-
-    predLessThan: all {n: Nat}: n < succ n
-    := ...
-
-    invertLessThan
-        all {x y ub: Nat}:
-            x < y  ->  y <= ub  ->  ub - y < ub - x
-    := ...
-
-
-    lessThanWellfounded: all {n}: Acc (<) n
-    := ...
+Having this we can code a complete function to find the smallest number
+satisfying a predicate.
 
 .. code::
 
@@ -298,19 +318,26 @@ ub`` is valid, then we have ``ub - y < ub - x``.
             (n, pN, lbN)
 
         \ n, false notPN, lbN, acc f :=
-            findAux (succ n) (d (succ n)) lbSuccN (f lt)
+            aux (succ n) (d (succ n)) lbSuccN (f lt)
             where
                 lt: v - succ n  <  v - n :=
                     invertLessThan predLessThan (lbSuccN vP)
                 lbSuccN: LowerBound P (succ n) :=
-                        -- use that n does not satisfy P and n is a lower
-                        -- bound of P
                     lowerBoundSucc lbN notPN
 
     find {P: Nat -> Prop} (d: Decider P): Exist P -> Refine (Least P)
     := case
         \ exist vP :=
             aux d vP zero (d zero) (zeroLowerbound P) lessThanWellfounded
+
+    -- Using the helper functions
+            predLessThan: all {n: Nat}: n < succ n
+            := ...
+
+            invertLessThan
+                all {x y ub: Nat}:
+                    x < y  ->  y <= ub  ->  ub - y < ub - x
+            := ...
 
 
 
