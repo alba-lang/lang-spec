@@ -74,6 +74,25 @@ a message of type ``M``.
 
 
 
+Command
+--------------------------------------------------------------------------------
+
+.. code::
+
+    Command: Any -> Any
+
+    pushUrl {M}: Key -> String -> Command M    -- Tasks?
+
+
+
+Subscription
+--------------------------------------------------------------------------------
+
+.. code::
+
+    Subscription: Any -> Any
+
+    receiveMessage {M}: Decoder M -> Subscription M
 
 
 
@@ -217,7 +236,7 @@ An example of a sandbox program:
         alba.core.int
         alba.core.string
         alba.browser.browser
-        
+
     type Message := [increment, decrement]
 
     update: Mesage -> Int -> Int := case
@@ -250,7 +269,7 @@ events like timers etc.
 .. code::
 
     element {S M: Any}:
-        (JSValue -> S * Command M)  -- initialisation
+        Decoder (S * Command M)     -- initialisation
         ->
         (M -> S -> S * Command M)   -- update
         ->
@@ -265,12 +284,12 @@ events like timers etc.
 Document
 --------------------------------------------------------------------------------
 
-A document application is occupies the whole browser page and its title. 
+A document application occupies the whole browser page and its title.
 
 .. code::
 
     document {S M: Any}:
-        (JSValue -> S * Command M)      -- initialisation
+        Decoder (S * Command M)         -- initialisation
         ->
         (M -> S -> S * Command M)       -- update
         ->
@@ -288,7 +307,7 @@ Single Page Application
 .. code::
 
     application {S M: Any}:
-        (JSValue -> Key -> Url -> S * Command M)    -- initialisation
+        Decoder (Key -> Url -> S * Command M)       -- initialisation
         ->
         (M -> S -> S * Command M)                   -- update
         ->
