@@ -13,6 +13,7 @@ Welcome to Alba's documentation!
     :caption: Contents:
 
     introduction/index
+    certprog/index
     lang-elems/index
     builtin/index
     intermediate/index
