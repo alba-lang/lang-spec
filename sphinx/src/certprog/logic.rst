@@ -70,7 +70,7 @@ Equality
         \ same, same := same
 
 
-    replace {A: Any} {F: A -> Any}: all {a b}: a = b  ->  F a  ->  F b
+    replace {A: Any}: all {a b: A} {F: A -> Any}: a = b  ->  F a  ->  F b
         -- If two values are equal then the first value can be replaced
         -- by the second value in any type.
     := case

@@ -62,13 +62,51 @@ Properties of Addition
         \ {succ n}, {b}   := (mapEquals plusCommutes, flip pullSucc)
 
 
-    plusAssociates: all {a b c: Nat}: a + (b + c) = (a + b) + c
+    plusAssociates: all {a b c: Nat}: (a + b) + c = a + (b + c)
     := case
-        \ {zero},   {_}, {_} := same
-        \ {succ n}, {_}, {_} := mapEquals plusAssociates
+        \ {zero},   {b}, {c} := same
+        \ {succ n}, {b}, {c} := mapEquals plusAssociates
 
 
 
+
+
+Properties of Multiplication
+================================================================================
+
+Multiplication distributes over addition. In order to prove this we need a
+helper theorem.
+
+
+.. code::
+
+    plusSwap: all {a b c: Nat}: a + (b + c) = b + (a + c)
+    :=
+        ( plusAssociates
+        , replace { \ x := x + c } plusCommutes
+        , flip plusAssociates
+        )
+
+
+Having ``plusSwap`` we can prove the distributivity of multiplication.
+
+.. code::
+
+    timesDistributes: all {a b c: Nat}: a * (b + c)  =  a * b + a * c
+        -- Multiplication distributes over addition
+    := case
+        \ {zero},    {b},   {c} := same
+        \ {succ n},  {b},   {c} :=
+            -- goal: (b + c) + n * (b + c)  =  (b + n * b) + (c + n * c)
+            ( flip plusAssociates
+                : _  =  b + (c + n * (b + c))
+            , replace {\ x := _ + (_ + x)} timesDistributes
+                : _  =  b + (c + (n * b + n * c))
+            , replace {\ x := _ + x} plusSwap
+                : _  =  b + (n * b + (c + n * c))
+            , plusAssociates
+                : _  =  (b + n * b) + (c + n * c)
+            )
 
 
 
@@ -85,7 +123,7 @@ Properties of Order
 
 
     leSucc: all {a: Nat}: a <= succ a
-        -- all numbers are less or equal their successor
+        -- All numbers are less or equal their successors
     := case
         \ {zero}      := start
         \ {succ n}    := next leSucc
@@ -105,10 +143,16 @@ Properties of Order
         -- type 'succ a <= zero'
 
 
+    ltSucc {a: Nat}: a < succ a
+        -- All numbers are less than their successors
+    :=
+        leReflexive
+
+
     (,): all {a b c: Nat}: a <= b  ->  b <= c  ->  a <= c
-        -- The less or equal relation in transitive
+        -- The '<=' relation is transitive
     := case
-        \ {a}, {_}, {zero}, leAB, leBZ :=
+        \ {a}, {b}, {zero}, leAB, leBZ :=
 
             let
                 aZ: a = zero := zeroLeast (replace (zeroLeast leBZ) leAB
