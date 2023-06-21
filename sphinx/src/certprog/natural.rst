@@ -211,40 +211,14 @@ Difference
 
 .. code::
 
-    (-): all (a b: Nat) {_: b <= a}: Nat
-    := case
-        \ a := zero,    m,       _          := a  -- 'm = zero'
-        \ a := succ _,  zero,    _          := a
-        \ succ n,       succ m,  {next le}  := n - m
-                --                ^ pattern match allowed
-                --   because 'next' is the only constructor to
-                --   construct and object of type 'succ m <= succ n'
-
-
-    minusPlusInvers: all {a b}: b <= a -> a - b + b = a
-    := case
-        \ zero,          b,       lt      := zeroLeast lt
-        \ a := succ _,   zero,    _       := zeroRightNeutral
-        \ succ n,        succ m,  next le :=
-            ( pullSucc:                  _ = succ (n - m + m)
-            , mapEquals (minusPlusInvers lt): _ = succ n
-            )
-
-
-    -- Maybe better definition: Fewer cases!!
-
-    (-) (a b: Nat) {lt: b <= a}: Nat :=
-        let
-            revMinus: all b a: b <= a -> Nat
-            := case
-                \ zero,    a,      _        := a
-                \ succ n,  succ m, next le  := revMinus n m le
-                --                 ^^^^^^^
+    (-) (a b: Nat) {le: b <= a}: Nat :=
+        match b, a, le case f
+            \ zero,     a,       _        := a
+            \ succ n,   succ m,  next le  := f n m le
+                --               ^^^^^^^
                 --   pattern match allowed
                 --   because 'next' is the only constructor to
                 --   construct and object of type 'succ n <= succ m'
-        :=
-            revMinus b a lt
 
     minusPlusInvers: all {b a: Nat}: b <= a -> a - b + b = a
     := case
@@ -254,12 +228,3 @@ Difference
             ( pullSucc                       : m - n + succ n = succ (m - n + n)
             , mapEquals (minusPlusInvers le) : _              = succ m
             )
-
-
-    -- With a mutual definition
-    mutual
-        (-): all (a b: Nat) {lt: b <= a}: Nat := case
-            \ a b {lt} := revMinus a b lt
-        revMinus: all (b a: Nat): b <= a -> Nat := case
-            \ zero,     a,       _        := a
-            \ succ n,   succ m,  next le  := m - n
