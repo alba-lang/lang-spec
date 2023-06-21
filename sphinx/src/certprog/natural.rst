@@ -129,6 +129,13 @@ Properties of Order
         \ {succ n}    := next leSucc
 
 
+    leSuccLe: all {a b: Nat}: succ a <= succ b  ->  a <= b
+        -- If two successors are less equal then the values are
+        -- less equal as well.
+    := case
+        \ next le := le
+
+
     zeroLeast: all {a: Nat}: a <= zero  ->  a = zero
         -- All numbers less or equal 'zero' are 'zero'
     := case
@@ -165,6 +172,10 @@ Properties of Order
 
 
 
+
+
+
+
 Order and Predicates
 ================================================================================
 
@@ -187,3 +198,68 @@ Order and Predicates
         -- 'x' is the smallest number satisfying 'P'
     :=
         LowerBound P x /\ P x
+
+
+
+
+
+
+
+Difference
+================================================================================
+
+
+.. code::
+
+    (-): all (a b: Nat) {_: b <= a}: Nat
+    := case
+        \ a := zero,    m,       _          := a  -- 'm = zero'
+        \ a := succ _,  zero,    _          := a
+        \ succ n,       succ m,  {next le}  := n - m
+                --                ^ pattern match allowed
+                --   because 'next' is the only constructor to
+                --   construct and object of type 'succ m <= succ n'
+
+
+    minusPlusInvers: all {a b}: b <= a -> a - b + b = a
+    := case
+        \ zero,          b,       lt      := zeroLeast lt
+        \ a := succ _,   zero,    _       := zeroRightNeutral
+        \ succ n,        succ m,  next le :=
+            ( pullSucc:                  _ = succ (n - m + m)
+            , mapEquals (minusPlusInvers lt): _ = succ n
+            )
+
+
+    -- Maybe better definition: Fewer cases!!
+
+    (-) (a b: Nat) {lt: b <= a}: Nat :=
+        let
+            revMinus: all b a: b <= a -> Nat
+            := case
+                \ zero,    a,      _        := a
+                \ succ n,  succ m, next le  := revMinus n m le
+                --                 ^^^^^^^
+                --   pattern match allowed
+                --   because 'next' is the only constructor to
+                --   construct and object of type 'succ n <= succ m'
+        :=
+            revMinus b a lt
+
+    minusPlusInvers: all {b a: Nat}: b <= a -> a - b + b = a
+    := case
+        \ {zero},   {a},      _       := zeroRightNeutral
+        \ {succ n}, {succ m}, next le :=
+            -- goal: m - n + succ n = succ m
+            ( pullSucc                       : m - n + succ n = succ (m - n + n)
+            , mapEquals (minusPlusInvers le) : _              = succ m
+            )
+
+
+    -- With a mutual definition
+    mutual
+        (-): all (a b: Nat) {lt: b <= a}: Nat := case
+            \ a b {lt} := revMinus a b lt
+        revMinus: all (b a: Nat): b <= a -> Nat := case
+            \ zero,     a,       _        := a
+            \ succ n,   succ m,  next le  := m - n
