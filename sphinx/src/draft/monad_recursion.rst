@@ -245,10 +245,10 @@ implemented as functions which decrease the same argument in the success case.
 
             char (d: Char -> Bool): Parser Char yes
             := case
-                \ [] :=
+                \ orig := [] :=
                     -- failure; argument not decreased
-                    (nothing, [])
-                \ (orig := c :: rest) :=
+                    (nothing, orig)
+                \ orig := c :: rest :=
                     if c d then
                         -- success; must decrease the argument
                         (just c, rest)
@@ -268,7 +268,7 @@ case of success because only one of them is executed with success.
                 \ s0 :=
                     match p s0 case
                         \ (nothing, _)  := q s0     -- 'p' fails, try 'q'
-                        \ x             := x        -- 'p' succeeds, ready
+                        \ (ja, s1)      := (ja, s1) -- 'p' succeeds, ready
 
 
 
@@ -304,26 +304,11 @@ Now we can write the recursive parsing combinator ``many``.
 
     section {A: Any} :=
         many (p: Parser A yes): Parser (List A) no :=
-            do
+            (do
                 hd := p             -- 'p' makes progress
                 tl := many          -- recursive call allowed
-                return (hd :: tl)
-            </>
-            return []
-
-The combinator ``many`` expressed without do notation:
-
-.. code::
-
-        many (p: Parser A yes): Parser (List A) no :=
-            (
-                p >>=
-                (\ hd :=
-                    many   -- recursive call protected by progress maker 'p'
-                    >>=
-                    (\ tl := return (hd :: tl))
-                )
-            )
+             :=
+                return (hd :: tl))
             </>
             return []
 
@@ -338,6 +323,7 @@ prograss as well.
             do
                 hd := p             -- progress
                 tl := many p        -- progress not guaranteed
+            :=
                 return (p :: tl)
 
 
@@ -480,12 +466,12 @@ A program to copy input to output.
 .. code::
 
     copy: IO Unit no :=
-        do
+        (do
             ch := getc          -- progress
             putc ch
-            copy                -- recursion allowed
+            copy)               -- recursion allowed
         |>
         eof (return ())
 
         -- or in other syntax
-        do [ch := getc, putc ch, copy] |> eof (return ())
+        (do [ch := getc, putc ch, copy]) |> eof (return ())
