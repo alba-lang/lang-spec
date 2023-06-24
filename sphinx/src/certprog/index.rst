@@ -7,3 +7,4 @@ Certified Programming
 
     logic
     natural
+    parsing
