@@ -8,3 +8,4 @@ Certified Programming
     logic
     natural
     parsing
+    printf
