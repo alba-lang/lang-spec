@@ -91,3 +91,111 @@ Recursive functions:
 
 Incremental Parsers
 ================================================================================
+
+
+All the following code is within a section
+
+.. code::
+
+    section {A B R: Any} {i j: Progress}
+    :=
+        ...
+
+A parser is an object which is either done with a number of consumed characters
+and an optional result, or it needs more input. In the second case it contains a
+function which accepts more input and returns a new incremental parser.
+
+.. code::
+
+    -- Parser
+
+    type Parser (A: Any) :=
+        done: Nat -> Maybe A -> Parser
+        more: (String -> Parser) -> Parser
+
+    put: String -> Parser A -> Parser A
+    := case
+        \ _,  (p: = done _ _ )  := p
+        \ s,  more f            := f s
+
+
+A partial parser is a continuation monad with state where the state consists of
+the number of consumed characters and a lookahead string. The lookahead string
+is a prefix of the remainder of input which is not yet consumed.
+
+A partial parser receives the state, parses a certain part of the lookahead and
+then calls the continuation with success or failure and the new state.
+
+.. code::
+
+    Mon (A R: Any) (_: Progress): Any
+        -- Continuation Monad
+    :=  Nat                                        -- consumed characters
+        -> String                                  -- lookaheads to parse
+        -> (Maybe A -> Nat -> String -> Parser R)  -- continuation
+        -> Parser R
+
+
+    (>>=) (m: Mon A R i) (f: A -> Mon B R j): Mon B R (i or j)
+        -- monadic bind
+    :=
+        \ n s k :=
+            m n s (case
+                    \ just a, n, s := f a n s k
+                    \ empty,  n, s := k empty n s)
+
+
+Recursion rule: Whenever there is a recursive call, then the continuation
+function is called in the success case with a structurally smaller argument and
+in failure cases the string argument is not increased.
+
+
+.. code::
+
+    -- Elementary monads
+
+    return (a: A): Mon A R no :=
+        \ n s k := k (just a) n s
+
+    fail: Mon A R no :=
+        \ n s k := k empty n s
+
+    char (d: Char -> Bool): Mon Char R yes
+    := case
+        \ n, (s := []),      k := more (\ s := char s k)
+                                  --           ^^^^ no recursion, partial call
+        \ m, (s := c :: s2), k :=
+            if d c then k (just c) (1 + n) s2
+            else        k empty    n       s
+
+The monad ``char d`` is a function which makes progress. It calls the
+continuation function with a shorter string in the success case and with the
+original string in the failure case.
+
+
+
+
+.. code::
+
+    -- Biased choice
+
+    (</>) (p: Mon A R i) (q: Mon A R j): Mon A R (i and j) :=
+        \ n s k :=
+            p n s (case
+                    \ just a, n2, s2 :=
+                            -- 'p' has succeeded
+                        k (just a) n2 s2
+                    \ empty,  n2, s2 :=
+                        if n = n2 then
+                                -- no consumption, try 'q'
+                            q n2 s2 k
+                        else
+                                -- 'p' has consumed and failed
+                            k empty n2 s2)
+
+.. code::
+
+    -- Make the parser from a partial parser
+
+    make (m: Cont R R i): Parser R :=
+        m 0 "" (\ res n _ := done res n)
