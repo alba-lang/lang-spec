@@ -20,55 +20,143 @@ monadic types which are some specific forms of functions.
 String Parser
 ================================================================================
 
+For a module we need one or more types, constructors of objects of the types,
+combinators which combine objects of the types and eliminators which use objects
+of the types to return objects which no longer contain the types.
+
 .. code::
 
-    Parser (A: Any) (_: Progress): Any :=
-        String -> (Maybe A, String)
+    -- module interface
 
-    section {A B: Any} {i j: Progress} :=
+    module "String Parser"
+        
+        -- Type
+        Parser: Any -> Progress -> Any
 
-        (>>=) (m: Parser A i) (f: A -> Parser B j): Parser B (i or j) :=
-            \ s :=
-                match m s case
-                    \ (just a, s2)  :=  f a s2
-                    \ (empty,  s2)  :=  (empty, s2)
+        section {A B: Any} {i j}: Progress :=
 
-        return (a: A): Parser A no :=
-            \ s := (just a, s)
+            -- Elementary constructors for the parser
+            return: A -> Parser A no
+            fail:   Parser A no
+            char:   (Char -> Bool) -> Parser Char yes
 
-        map (f: A -> B) (m: Parser A i): Parser B i :=
-            \ s :=
-                match m s case
-                    \ (just a, s2)  :=  (just (f a), s2)
-                    \ (empty,  s2)  :=  (empty, s2)
+            -- Combinators
+            (>>=):  Parser A i -> (A -> Parser B j) -> Parser B (i or j)
+            (</>):  Parser A i -> Parser A j        -> Parser A (i and j)
 
-        </> (p: Parser A i) (q: Parser A j): Parser A (i and j) :=
-            \ s :=
-                match p s case
-                    \ (just a, s2)  := (just a, s2)
-                    \ (empty,  s2)  := q s
+            -- Run a parser
+            run:    Parser A i -> String -> (Maybe A, String)
 
-        char (d: Char -> Bool): Parser Char yes := case
-            \ (s := [])      :=  (empty, s)     -- string not decreased
-            \ (s := c :: s2) :=
-                if d c then (just c, s2)        -- string decreased
-                else        (empty, s)          -- string not decreased
+This interface declares ``Parser`` to be a type constructor. One of the type
+arguments is ``Progress``. This is meaningful only if ``Parser A i`` is a
+function type.
 
-Remarks:
+A string parser has a monadic bind operator ``>>=``. This enables the use of
+``do`` expressions.
 
-- ``(>>=)`` is recognized by the compiler as a monadic bind operator. This
-  recognition enables ``do`` expressions with the monad ``Parser``.
+Next we define the module and start with the type
 
-- The parser monad has a progress indicator. The progress indicator makes the
-  definition opaque and there must not be any function returning a parser which
-  does increase the string. I.e. all function returning a parser have to either
-  decrease the string or leave it unchanged.
+.. code::
 
-- The bind operator has the correct signature (result type with index ``i or
-  j``)
+    module "String Parser" :=
 
-- The bind operator defines the success case ``just a`` and the failure case
-  ``empty``. All parser which return ``just a`` must decrease the string.
+        Parser (A: Any) (_: Progress): Any :=
+            String -> (Maybe A, String)
+
+A parser is a function with a string argument (i.e. only one state) and the
+string appears in the result. This imposes the requirement that no function is
+allowed to increase the string and all progressing parser have to decrease the
+string in the success case.
+
+From the declaration of the monadic bind the compiler knows that `A` is the
+monadic argument. The argument type ``A`` in the result type has to within a
+container with two constructors, one for the success case and one for the
+failure case. In the success case the result has to contain an object of type
+``A``, in the failure case it must not contain an object of type ``A``. The
+inductive type ``Maybe`` satisfies this requirement.
+
+The remainder of the definition is understood to be within a section as in the
+module interface in order to avoid repetition of formal arguments.
+
+First we define the elementary constructors which construct non progresssing
+parsers.
+
+.. code::
+
+    return (a: A): Parser A no :=
+        \ s := (just a, s)
+
+    fail: Parser A no :=
+        \ s := (empty, s)
+
+Both functions make non progressing parsers, they don't change the string.
+
+Now the only constructor for a progressing parser.
+
+.. code::
+
+    char (d: Char -> Bool): Parser Char yes := case
+        \ (s := [])      :=  (empty, s)     -- string not decreased
+        \ (s := c :: s2) :=
+            if d c then (just c, s2)        -- string decreased
+            else        (empty, s)          -- string not decreased
+
+In the failure cases the string is kept the same and in the success case the
+string is decreased.
+
+We have to define the monadic bind.
+
+.. code::
+
+    (>>=) (p: Parser A i) (f: A -> Parser B j): Parser B (i or j) :=
+        \ s :=
+            match p s case
+                \ (just a, s2)  :=  f a s2
+                \ (empty,  s2)  :=  (empty, s2)
+
+The function ``f`` can be called only in the success case (otherwise there is no
+object of type ``A``.
+
+The parser ``p`` might make progress or not in the success
+case. I.e. in the success case the function ``f`` is guaranteed to be called
+with a string ``s2`` which is the same as ``s`` or decreased, depending on the
+progress indicator ``i``. The parser ``f a`` makes progress depending on ``j``.
+The combined parser makes progress if ``p`` or ``f a`` make progress.
+
+In the failure case the parser ``p`` must not change the string. The combined
+parser fails as well and does not change the string either.
+
+The remaining combinator is the biased choice.
+
+.. code::
+
+    </> (p: Parser A i) (q: Parser A j): Parser A (i and j) :=
+        \ s :=
+            match p s case
+                \ (just a, s2)  := (just a, s2)
+                \ (empty,  s2)  := q s
+
+If ``p`` makes progress in the success case, then the result parser makes
+progress as well.
+
+``p`` might make progress in the failure case. Therefore the progress of the
+combined parser depends of the progress of ``q``.
+
+The combined parser ``p </> q`` is guaranteed to make progress in the success
+case only if both guarantee progress in the success case.
+
+Running the parser.
+
+.. code::
+
+    run (p: Parser A i)  (s: String): (Maybe A, String) :=
+        p s
+
+This completes the definition of the string parser module. The next functions
+are defined outside the module and therefore cannot use the knowledge that an
+object of type ``Parser A i`` is a function. Outside the module an object of
+type ``Parser A i`` can be applied to a string only by the function call
+``run p s``.
 
 
 Recursive functions:
