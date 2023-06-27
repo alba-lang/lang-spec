@@ -253,8 +253,8 @@ in failure cases the string argument is not increased.
         \ n, (s := []),      k := more (\ s := char s k)
                                   --           ^^^^ no recursion, partial call
         \ m, (s := c :: s2), k :=
-            if d c then k (just c) (1 + n) s2
-            else        k empty    n       s
+            if d c then k (just c) (succ n) s2
+            else        k empty    n        s
 
 The monad ``char d`` is a function which makes progress. It calls the
 continuation function with a shorter string in the success case and with the
@@ -269,17 +269,20 @@ original string in the failure case.
 
     (</>) (p: Mon A R i) (q: Mon A R j): Mon A R (i and j) :=
         \ n s k :=
-            p n s (case
-                    \ just a, n2, s2 :=
+            p zero (case
+                    \ empty,    zero,     s2 :=
+                            -- no consumption, try 'q'
+                        q (zero + n) s2 k
+
+                    \ empty,    succ n2,  s2 :=
+                            -- 'p' has consumed and failed
+                        k empty (n2 + n)
+
+                    \ just a,   n2,       s2 :=
                             -- 'p' has succeeded
-                        k (just a) n2 s2
-                    \ empty,  n2, s2 :=
-                        if n = n2 then
-                                -- no consumption, try 'q'
-                            q n2 s2 k
-                        else
-                                -- 'p' has consumed and failed
-                            k empty n2 s2)
+                        k (just a) (n2 + n) s2
+            )
+
 
 .. code::
 
@@ -287,3 +290,60 @@ original string in the failure case.
 
     make (m: Cont R R i): Parser R :=
         m 0 "" (\ res n _ := done res n)
+
+
+
+
+
+
+Backtracking (DRAFT)
+================================================================================
+
+PROBLEM: When backtracking is possible we have to buffer some consumed
+characters. The buffer has to be part of the state. When a parser which shall be
+made backtrackable fails and consumes characters, then part of the consumed
+characters have to be shifted back to the lookahead. This breaks the progress
+and termination proof!!
+
+
+.. code::
+
+    char (d: Char -> Bool): Mon Char R yes
+    := case
+        \ pre, (la := c :: la2),  k :=
+
+            if d c then
+                k (just c) (c :: pre) la2
+                    -- prefix increased by one constructor
+                    -- lookahead decreased by one constructor
+            else
+                k empty pre la
+                    -- prefix and lookahead unchanged
+
+        \ pre, (la := ""), k :=
+
+            more (\ la := char pre la k)
+                -- Not a recursive call, just a closure.
+                -- Continuation paused until a new lookahead is
+                -- available. Prefix and continuation unchanged.
+
+
+    backtrack (p: Mon A R i): Mon A R no :=
+        \ pre la k :=
+            p "" la
+              (case
+                \ empty,  "",    la2 :=
+                            -- 'p' failed without consumption
+                    k empty "" la2
+
+                \ empty,  pre2,  la2 :=
+                            -- 'p' failed and consumed
+                            -- consumption is in 'pre2'
+                        k empty pre (revPrepend pre2 la2)
+
+                \ just a, pre2, la2 :=
+                        -- 'p' has succeeded and consumed 'pre2' since its start
+                        -- The continuation has to be called with a consumption
+                        -- of 'pre2 + pre'.
+                    k (just a) (pre2 + pre) la2
+              )
