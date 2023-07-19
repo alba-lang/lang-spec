@@ -50,3 +50,50 @@ Printf like Functions
         -- E.g. 'printf "name %s, value %d" "diameter" 5'
     :=
         toFun "" (parse s)
+
+
+
+Without syntax tree:
+
+.. code::
+
+    TypeFmt: String -> Any
+    := case
+        \ []                 := String
+        \ '%' :: 'd' :: fmt  := Int    -> TypeFmt s
+        \ '%' :: 's' :: fmt  := String -> TypeFmt s
+        \ '%' :: 'a' :: fmt  := all {A: Any}: (A -> String) -> A -> TypeFmt s
+        \ c   :: fmt         := TypeFmt s
+
+
+    printf (fmt: String): TypeFmt fmt :=
+        let
+            aux: List String -> all (fmt: String): TypeFmt fmt
+            := case
+                \ l,  []                 := foldLeft (\ accu s := s + accu) "" l
+                \ l,  '%' :: 'd' :: fmt  := \ i   := aux (toString i :: l) fmt
+                \ l,  '%' :: 'd' :: fmt  := \ s2  := aux (s2 :: l) fmt
+                \ l,  '%' :: 'a' :: fmt  := \ f a := aux (f a :: l) fmt
+                \ l,  c   :: fmt         := aux (toString c :: l) fmt
+        :=
+            aux [] fmt
+
+
+The version without using a syntax tree is shorter and in my opinion more
+understandable. Maybe it can be further improved in efficiency by using a
+difference list.
+
+
+.. code::
+
+    printf (fmt: String): TypeFmt fmt :=
+        let
+            aux: (String -> String) -> all (fmt: String): TypeFmt fmt
+            := case
+                \ ds,  []                 := ds ""
+                \ ds,  '%' :: 'd' :: fmt  := \ i   := aux ((+) (toString i) << ds) fmt
+                \ ds,  '%' :: 'd' :: fmt  := \ s2  := aux ((+) s2 << ds) fmt
+                \ ds,  '%' :: 'a' :: fmt  := \ f a := aux ((+) (f a) << ds) fmt
+                \ ds,  c   :: fmt         := aux ((+) (toString c) << ds) fmt
+        :=
+            aux (\ s := s) fmt
