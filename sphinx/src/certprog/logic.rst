@@ -24,6 +24,10 @@ Propositions
         right: B -> (\/)
 
 
+    type Exist {A: Any} (P: A -> Prop): Prop :=
+        (,) {w}: P w -> Exist
+
+
 
 Decisions
 ================================================================================
@@ -37,6 +41,22 @@ Decisions
 
     Decider {A: Any} (P: A -> Prop): Any :=
         all x: Decision (P x)
+
+
+
+
+Refinement
+================================================================================
+
+An object of a refinement type of type ``A`` is an object of type ``A`` and a
+proof that the object satisfies a certain predicate ``P``. The refinement type
+is like the exisitence type with the difference that the witness is not a ghost
+object.
+
+.. code::
+
+    type Refine {A: Any} (P: A -> Prop): Any :=
+        (,) {w}: P w -> Refine
 
 
 

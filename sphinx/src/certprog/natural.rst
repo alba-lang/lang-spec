@@ -82,9 +82,9 @@ helper theorem.
 
     plusSwap: all {a b c: Nat}: a + (b + c) = b + (a + c)
     :=
-        ( plusAssociates
-        , replace { \ x := x + c } plusCommutes
-        , flip plusAssociates
+        ( flip plusAssociates:                    _ = (a + b) + c
+        , mapEquals {\ x := x + c} plusCommutes:  _ = (b + a) + c
+        , plusAssociates:                         _ = b + (a + c)
         )
 
 
@@ -98,13 +98,13 @@ Having ``plusSwap`` we can prove the distributivity of multiplication.
         \ {zero},    {b},   {c} := same
         \ {succ n},  {b},   {c} :=
             -- goal: (b + c) + n * (b + c)  =  (b + n * b) + (c + n * c)
-            ( flip plusAssociates
+            ( plusAssociates
                 : _  =  b + (c + n * (b + c))
-            , replace {\ x := _ + (_ + x)} timesDistributes
+            , mapEquals {\ x := _ + (_ + x)} timesDistributes
                 : _  =  b + (c + (n * b + n * c))
-            , replace {\ x := _ + x} plusSwap
+            , mapEquals {\ x := _ + x} plusSwap
                 : _  =  b + (n * b + (c + n * c))
-            , plusAssociates
+            , flip plusAssociates
                 : _  =  (b + n * b) + (c + n * c)
             )
 
@@ -116,10 +116,28 @@ Properties of Order
 .. code::
 
     leReflexive: all {a: Nat}: a <= a
-        -- The less equal relation is reflexive
+        -- The less equal relation is reflexive.
     := case
         \ {zero}      :=  start
         \ {succ n}    :=  next leReflexive
+
+
+    ltIrreflexive: all {a: Nat}: a < a -> False
+        -- The less than relation is irreflexive.
+    := case
+        -- The 'start' constructor constructs 'zero <= _' which cannot be
+        -- unified with 'succ ?a <= ?a'.
+        \ next lt := ltIrreflexive lt
+
+
+    leLtOrEq: all {a b: Nat}: a <= b -> a < b \/ a = b
+    := case
+        \ {zero},   {zero},     start   := right same
+        \ {zero},   {succ _},   start   := left (next start)
+        \ {succ _}, {succ _},   next le :=
+            match leLtOrEq le case
+                \ left  lt  := left  (next lt)
+                \ right eq  := right (mapEquals eq)
 
 
     leSucc: all {a: Nat}: a <= succ a
@@ -156,20 +174,12 @@ Properties of Order
         leReflexive
 
 
-    (,): all {a b c: Nat}: a <= b  ->  b <= c  ->  a <= c
+
+    (,): all {a b c: Nat}: a <= b -> b <= c -> a <= c
         -- The '<=' relation is transitive
     := case
-        \ {a}, {b}, {zero}, leAB, leBZ :=
-
-            let
-                aZ: a = zero := zeroLeast (replace (zeroLeast leBZ) leAB
-            :=
-                replace (flip aZ) start
-
-        \ {succ n}, leAB, leBN :=
-
-            leSucc (leAB, leBN)
-
+        \ start,        _           := start
+        \ next leAB,    next leBC   := next (leAB, leBC)
 
 
 
@@ -200,6 +210,15 @@ Order and Predicates
         LowerBound P x /\ P x
 
 
+    lowerBoundSucc
+        {n: Nat} (lbN: LowerBound P n) (notPN: Not P n)
+        : LowerBound P (succ n)
+    :=
+        \ {y} (pY: P y): succ n <= y :=
+            match leLtOrEq (lbN pY) case
+                \ left  lt  := lt
+                \ right eq  := notPN (replace {P} (flip eq) pY)
+
 
 
 
@@ -211,20 +230,142 @@ Difference
 
 .. code::
 
-    (-) (a b: Nat) {le: b <= a}: Nat :=
-        match b, a, le case f
-            \ zero,     a,       _        := a
-            \ succ n,   succ m,  next le  := f n m le
-                --               ^^^^^^^
-                --   pattern match allowed
-                --   because 'next' is the only constructor to
-                --   construct and object of type 'succ n <= succ m'
-
-    minusPlusInvers: all {b a: Nat}: b <= a -> a - b + b = a
+    (-): all (a b: Nat) {le: b <= a}: Nat
     := case
-        \ {zero},   {a},      _       := zeroRightNeutral
-        \ {succ n}, {succ m}, next le :=
-            -- goal: m - n + succ n = succ m
-            ( pullSucc                       : m - n + succ n = succ (m - n + n)
-            , mapEquals (minusPlusInvers le) : _              = succ m
+        \ (a := zero),   zero,      start   := a
+        \ (a := succ _), zero,      start   := a
+        \ succ n,        succ m,    next le := n - m
+
+Note that the pattern match on ``b <= a`` is allowed in the case clauses,
+because only one constructor is possible. Therefore no decision is made on the
+propositional pattern match.
+
+
+.. code::
+
+    minusPlusInvers: all {a b: Nat}: b <= a -> a - b + b = a
+    := case
+        \ {zero},       {zero},     _       := zeroRightNeutral
+        \ {succ n},     {zero},     _       := zeroRightNeutral
+        \ {succ n},     {succ m},   next le :=
+            -- goal: (succ n - succ m) + succ m = succ n
+            -- i.e.: (n - m) + succ m = succ n
+            (
+                pullSucc: _ = succ ((n - m) + m)
+            ,
+                mapEquals (minusPlusInvers le)
             )
+
+
+.. code::
+
+    minusLe: all {a b: Nat}: b <= a -> a - b <= a
+        -- Substraction makes a number less equal.
+    := case
+        \ {zero},   {zero},   start     := start
+        \ {succ n}, {zero},   start     := leReflexive
+        \ {succ n}, {succ m}, next le   :=
+            -- goal: succ n - succ m <= succ n
+            -- i.e.: n - m  <= succ n
+            (
+                minusLe le: n - m <= n
+            ,
+                leSucc:     n <= succ n
+            )
+
+
+
+From ``a < b`` we can infer ``c - b < c - a`` provided that ``b <= c`` is valid.
+
+.. code::
+
+    minusLt: all {a b c: Nat}: a <= c  ->  b <= c  ->  a < b  ->  c - b < c - a
+        -- The preconditions 'a <= c'  and 'b <= c' are needed for '-'
+    := case
+        \ start,        next leBC,      next ltAB   :=
+            -- goal: succ c - succ b < succ c - zero
+            -- i.e.: succ (c - b) <= succ c
+            next (minusLe leBC)
+        \ next leAC,    next leBC,      next ltAB   :=
+            -- goal: succ c - succ b < succ c - succ a
+            -- i.e.: c - b < c - a
+            minusLt leAC leBC ltAB
+
+
+
+
+
+
+
+Wellfounded Recursion
+================================================================================
+
+
+Clearly all natural numbers are finite, because each number is constructor by
+finitely many application of the successor function. But here we invent another
+way to express the finiteness of natural numbers.
+
+We say that a number is finite, if all numbers below it are finite.
+
+.. code::
+
+    type Finite: Nat -> Prop :=
+        fin {x}: (all {y}: y < x -> Finite y) -> Finite x
+
+
+We can prove that all natural numbers are finite by an induction proof.
+
+.. code::
+
+    natFinite: all {n: Nat}: Finite n
+    := case
+        \ {zero} :=
+            fin notLtZero
+
+        \ {succ n} :=
+            -- goal: Finite (succ n)
+            let
+                aux: Finite n -> all {y}: y < succ n -> Finite y
+                := case
+                    \ (finN :=fin f), next le :=
+                        match leLtOrEq le case
+                            \ left  lt  := f lt
+                            \ right eq  := replace {Finite} (flip eq) finN
+            :=
+                fin (aux natFinite)
+
+
+Unbounded search:
+
+.. code::
+
+    find {P: Nat -> Prop} (d: Decider P): Exist P -> Refine (Least P)
+    := case
+        \ (w, pW) :=
+            let
+                aux n:
+                    LowerBound P n          -- invariant
+                    -> Finite (w - n)       -- bound function
+                    -> Decision P n
+                    -> Refine (Least P)
+                := case
+                    \ n, lbN, _, true pN :=
+                        (n, lbN, pN)
+
+                    \ n, lbN, fin f, false notPN :=
+                        let
+                            lbSN: LowerBound P (succ n) :=
+                                lowerBoundSucc lbN notPN
+
+                            leSNW: succ n <= w :=
+                                lbSN pW
+
+                            leNW: n <= w :=
+                                lbN pW
+
+                            ltWmSN: w - succ n < w - n :=
+                                minusLt leNW leSNW leReflexive
+                        :=
+                            aux (succ n) (lbSN) (d (succ n)) (f ltWmSN)
+            :=
+                aux zero (\ _ := start) (d zero) natFinite
