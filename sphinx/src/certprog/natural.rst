@@ -301,7 +301,7 @@ Wellfounded Recursion
 ================================================================================
 
 
-Clearly all natural numbers are finite, because each number is constructor by
+Clearly all natural numbers are finite, because each number is constructed by
 finitely many application of the successor function. But here we invent another
 way to express the finiteness of natural numbers.
 
