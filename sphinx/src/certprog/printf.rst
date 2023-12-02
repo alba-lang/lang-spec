@@ -60,10 +60,10 @@ Without syntax tree:
     TypeFmt: String -> Any
     := case
         \ []                 := String
-        \ '%' :: 'd' :: fmt  := Int    -> TypeFmt s
-        \ '%' :: 's' :: fmt  := String -> TypeFmt s
-        \ '%' :: 'a' :: fmt  := all {A: Any}: (A -> String) -> A -> TypeFmt s
-        \ c   :: fmt         := TypeFmt s
+        \ '%' :: 'd' :: fmt  := Int    -> TypeFmt fmt
+        \ '%' :: 's' :: fmt  := String -> TypeFmt fmt
+        \ '%' :: 'a' :: fmt  := all {A: Any}: (A -> String) -> A -> TypeFmt fmt
+        \ _   :: fmt         := TypeFmt fmt
 
 
     printf (fmt: String): TypeFmt fmt :=
