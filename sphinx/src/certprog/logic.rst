@@ -25,7 +25,7 @@ Propositions
 
 
     type Exist {A: Any} (P: A -> Prop): Prop :=
-        (,) {w}: P w -> Exist
+        exist {w}: P w -> Exist
 
 
 
