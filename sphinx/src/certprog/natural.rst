@@ -41,6 +41,29 @@ Basic Definitions
 
 
 
+Zero is Different from a Successor
+================================================================================
+
+
+.. code::
+
+    zeroNeSucc: all {n: Nat}: zero = succ n -> False :=
+        case        -- no clauses
+
+A potential clause would have the form
+
+.. code::
+
+    case
+    \ {n}, same {?m} := ?
+    --      : ?m = ?m
+
+This would require to unify ``zero = succ n`` with ``?m = ?m`` which is
+impossible, because ``?m`` cannot be ``zero`` and ``succ n`` at the same time
+(``zero`` and ``succ n`` are not unifiable).
+
+
+
 Properties of Addition
 ================================================================================
 
@@ -113,14 +136,61 @@ Having ``plusSwap`` we can prove the distributivity of multiplication.
 Properties of Order
 ================================================================================
 
+
+Reflexivity
+
 .. code::
 
     leReflexive: all {a: Nat}: a <= a
         -- The less equal relation is reflexive.
     := case
         \ {zero}      :=  start
-        \ {succ n}    :=  next leReflexive
+        \ {succ _}    :=  next leReflexive
 
+    -- with implicits made explicit
+        \ {zero}      := start {zero}
+        \ {succ n}    := next {n} {n} (leReflexive {n})
+
+
+Inversion
+
+.. code::
+
+    leInvers {a b: Nat}: succ a <= succ b  ->  a <= b
+        -- If two successors are less equal then the values are
+        -- less equal as well.
+    := case
+        -- constructor 'start' not possible, its type is 'zero <= .'
+        \ next le := le
+
+        -- with implicits
+        \ next {a} {b} le := le
+
+
+Transitivity
+
+.. code::
+
+    (,): all {a b c: Nat}: a <= b -> b <= c -> a <= c
+        -- The '<=' relation is transitive
+    := case
+        \ start,        _           := start
+        \ next leAB,    next leBC   := next (leAB, leBC)
+
+        -- with implicits
+        \ {zero}, {b}, {c}, start {b}, _ :=
+
+            start {c}
+
+        \ {succ a}, {succ b}, {succ c}, next {a} {b} leAB, next {b} {c} leBC :=
+
+            next {a} {c} ((,) {a} {b} {c} leAB leBC)
+
+
+
+Others
+
+.. code::
 
     ltIrreflexive: all {a: Nat}: a < a -> False
         -- The less than relation is irreflexive.
@@ -147,12 +217,6 @@ Properties of Order
         \ {succ n}    := next leSucc
 
 
-    leSuccLe: all {a b: Nat}: succ a <= succ b  ->  a <= b
-        -- If two successors are less equal then the values are
-        -- less equal as well.
-    := case
-        \ next le := le
-
 
     zeroLeast: all {a: Nat}: a <= zero  ->  a = zero
         -- All numbers less or equal 'zero' are 'zero'
@@ -173,13 +237,6 @@ Properties of Order
     :=
         leReflexive
 
-
-
-    (,): all {a b c: Nat}: a <= b -> b <= c -> a <= c
-        -- The '<=' relation is transitive
-    := case
-        \ start,        _           := start
-        \ next leAB,    next leBC   := next (leAB, leBC)
 
 
 

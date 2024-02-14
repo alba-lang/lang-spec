@@ -6,7 +6,9 @@ Compilation
 
 .. toctree::
 
+    pattern_match
     elaboration/index
+
 
 Context
 ================================================================================
