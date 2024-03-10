@@ -164,13 +164,18 @@ Recursive functions:
 .. code::
 
         many (p: Parser A yes): Parser (List A) no :=
-            do [a := p] map ((::) a) many
+            do
+                a   := p
+                lst := many
+                return (a :: lst)
             </>
             return []
 
         many1 (p: Parser A yes): Parser (A, List A) yes :=
-            do [a  := p]
-               map (\ as := (a, as)) (many p)
+            do
+                a   := p
+                lst := many
+                return (a :: lst)
 
 
 
@@ -299,11 +304,23 @@ original string in the failure case.
 Backtracking (DRAFT)
 ================================================================================
 
-PROBLEM: When backtracking is possible we have to buffer some consumed
+PROBLEM:
+
+When backtracking is possible we have to buffer some consumed
 characters. The buffer has to be part of the state. When a parser which shall be
 made backtrackable fails and consumes characters, then part of the consumed
 characters have to be shifted back to the lookahead. This breaks the progress
 and termination proof!!
+
+
+POSSIBLE SOLUTION:
+
+Each stripping off on one constructor adds at most one constructor to another
+inductive type. A backtrackable parser has to initialize the other object
+to zero level. When backtracking, the other object can be eliminated in case of
+failure.
+
+
 
 
 .. code::
@@ -330,7 +347,7 @@ and termination proof!!
 
     backtrack (p: Mon A R i): Mon A R no :=
         \ pre la k :=
-            p "" la
+            p "" la         -- pre initialized to zero level
               (case
                 \ empty,  "",    la2 :=
                             -- 'p' failed without consumption
@@ -340,6 +357,8 @@ and termination proof!!
                             -- 'p' failed and consumed
                             -- consumption is in 'pre2'
                         k empty pre (revPrepend pre2 la2)
+                        --       ^               ^ elimination of 'pre2'
+                        --       | restoring the old value
 
                 \ just a, pre2, la2 :=
                         -- 'p' has succeeded and consumed 'pre2' since its start
