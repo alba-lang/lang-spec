@@ -7,5 +7,6 @@ Certified Programming
 
     logic
     natural
+    binary_natural
     parsing
     printf
