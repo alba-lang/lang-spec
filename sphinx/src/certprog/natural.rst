@@ -289,9 +289,14 @@ Difference
 
     (-): all (a b: Nat) {le: b <= a}: Nat
     := case
-        \ (a := zero),   zero,      start   := a
-        \ (a := succ _), zero,      start   := a
-        \ succ n,        succ m,    next le := n - m
+        \ (a := zero)    zero       start     := a
+        \ (a := succ _)  zero       start     := a
+        \ (succ n)       (succ m)   (next le) := n - m
+
+       -- or better
+       case
+         a        zero     {start}    := a
+         (succ n) (succ m) {next le}  := (n - m) {le}
 
 Note that the pattern match on ``b <= a`` is allowed in the case clauses,
 because only one constructor is possible. Therefore no decision is made on the
@@ -401,7 +406,8 @@ Unbounded search:
         \ (w, pW) :=
             let
                 aux n:
-                    LowerBound P n          -- invariant
+                    n <= w                  -- invariant 1
+                    -> LowerBound P n       -- invariant 2
                     -> Finite (w - n)       -- bound function
                     -> Decision P n
                     -> Refine (Least P)
@@ -409,7 +415,7 @@ Unbounded search:
                     \ n, lbN, _, true pN :=
                         (n, lbN, pN)
 
-                    \ n, lbN, fin f, false notPN :=
+                    \ n, leNW lbN, fin f, false notPN :=
                         let
                             lbSN: LowerBound P (succ n) :=
                                 lowerBoundSucc lbN notPN
@@ -417,12 +423,9 @@ Unbounded search:
                             leSNW: succ n <= w :=
                                 lbSN pW
 
-                            leNW: n <= w :=
-                                lbN pW
-
                             ltWmSN: w - succ n < w - n :=
                                 minusLt leNW leSNW leReflexive
                         :=
-                            aux (succ n) (lbSN) (d (succ n)) (f ltWmSN)
+                            aux (succ n) leSNW lbSN (f ltWnSN) (d (succ n))
             :=
-                aux zero (\ _ := start) (d zero) natFinite
+                aux zero start (\ _ := start) natFinite (d zero)
