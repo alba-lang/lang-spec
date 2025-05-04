@@ -8,5 +8,7 @@ Certified Programming
     logic
     natural
     binary_natural
+    list
+    vector
     parsing
     printf
