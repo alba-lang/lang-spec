@@ -21,6 +21,22 @@ type ``A``.
         (::) {n}: A -> _ n -> _ (succ n)
 
 
+
+    length {A}: all {n}: Vector A n -> Nat
+    := case
+        []        := zero
+        (_ :: xs) := succ (length xs)
+
+
+    vectorLength {A}: all {n} {a: Vector A n}: length a = n
+    := case
+        [] :=
+            refl
+
+        {_ :: xs} :=
+            congruence succ vectorLength
+
+
     rec
         {A n}
         {P: all {n}: Vec A n -> Any}
@@ -66,27 +82,33 @@ Concatenate Vectors
         (x :: xs) b :=
             x :: xs + b
 
-The empty vector is right neutral with respect to concatenation.
+
+
+
+Reverse Vectors
+================================================================================
+
 
 .. code::
 
-    rnNat {n: Nat}: n + zero = n :=
-        rightNeutral
-
-    rightNeutral {A: Any}: all {n} {a: Vector A n}: cast rnNat (a + []) = a
+    reversePrepend {A}: all {n m}: Vector A n -> Vector A m -> Vector A (n + m)
+        -- 'reversePrepend a b': Prepend the reversed vector 'a'
+        --                       in front of the vector 'b'. 
     := case
-        {[]} :=
-            refl
+            [] b :=
+                b
 
-        {x :: xs} :=
-            -- goal case rnNat ((x :: xs) + []) = x :: xs
-    
-    --
-        (x :: xs) + []: Vector A (succ n + 0)
-        ~>
-        x :: xs + []:   Vector A (succ (n + 0))
+            (x :: xs) b :=
+                x :: reversePrepend xs b
 
-        x :: xs: Vector A (succ n)
-                    
-            
-            
+
+    reverse {A}: all {n}: Vector A n -> Vector A n :=
+        \ {_} a :=
+            reversePrepend a [] |> cast zeroRightNeutral
+
+
+
+    (+) {A}: all {n m}: Vector A n -> Vector A m -> Vector A (n + m)
+    :=
+        \ {_} {_} a b :=
+            reversePrepend (reverse a) b
