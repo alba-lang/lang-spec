@@ -491,14 +491,28 @@ We can prove that all natural numbers are finite by an induction proof.
         \ {succ n} :=
             -- goal: Finite (succ n)
             let
-                aux: Finite n -> all {y}: y < succ n -> Finite y
+                aux: all {n}: Finite n -> all {y}: y < succ n -> Finite y
                 := case
-                    \ (finN := fin f), next le :=
-                        match leLtOrEq le case
-                            \ left  lt  := f lt
-                            \ right eq  := replace {Finite} (flip eq) finN
+                    -- no match for
+                    --      {_} _ {_} start
+                    -- because
+                    --      succ y <= x
+                    -- cannot be unified with
+                    --      zero <= x
+
+                    {n} (finN := fin f) {y} (next le) :=
+                        match
+                            leLtOrEq (le: y <= n): y < n \/ y = n
+                        case
+                            left  lt  :=
+                                (f: all {y}: y < n -> Finite y)
+                                    lt
+
+                            right eq  :=
+                                cast (flip eq) finN
             :=
-                fin (aux natFinite)
+                fin (aux natFinite: all {y}: y < succ n -> Finite y)
+                : Finite (succ n)
 
 
 Unbounded search:
@@ -509,17 +523,17 @@ Unbounded search:
     := case
         \ (w, pW) :=
             let
-                aux n:
-                    n <= w                  -- invariant 1
-                    -> LowerBound P n       -- invariant 2
-                    -> Finite (w - n)       -- bound function
-                    -> Decision P n
-                    -> Refine (Least P)
+                aux: all n:
+                        n <= w  ->              -- invariant 1
+                        LowerBound P n ->       -- invariant 2
+                        Finite (w - n) ->       -- bound function
+                        Decision P n   ->
+                        Refine (Least P)
                 := case
-                    \ n, lbN, _, true pN :=
+                    n _ lbN _ (true pN) :=
                         (n, lbN, pN)
 
-                    \ n, leNW lbN, fin f, false notPN :=
+                    n leNW lbN (fin f) (false notPN) :=
                         let
                             lbSN: LowerBound P (succ n) :=
                                 lowerBoundSucc lbN notPN
