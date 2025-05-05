@@ -67,28 +67,82 @@ impossible, because ``?m`` cannot be ``zero`` and ``succ n`` at the same time
 Properties of Addition
 ================================================================================
 
+Having ``a + succ b`` it is possible to pull out the successor function getting
+``succ (a + b)``. This can be proved by induction on ``a``. The base case is
+proved by reflexivity. The induction step requires to prove the equality of the
+two expressions
+
+.. code::
+
+    -- expressions                          normal forms
+    succ n + succ b                         succ (n + succ b)
+    succ (succ n + b)                       succ (succ (n + b))
+
+This can be done by the induction hypothesis using congruence.
+
 
 .. code::
 
     pullSucc: all {a b: Nat}: a + succ b = succ (a + b) := case
-        \ {zero},   {b} := same
-        \ {succ n}, {b} := map succ pullSucc
+        \ {zero},   {_} := refl
+        \ {succ n}, {_} := congruence succ pullSucc
 
+Zero is the neutral element of addition. The left neutrality doesn't need a
+proof. It is evident by normalisation. The right neutrality ``a + zero = a``
+requires an induction proof.
+
+.. code::
 
     zeroRightNeutral: all {a: Nat}: a + zero = a := case
-        \ {zero}   := same
-        \ {succ n} := map succ zeroRightNeutral
+        \ {zero}   := refl
+        \ {succ n} := congruence succ zeroRightNeutral
 
+Addition is commutative i.e. ``a + b = b + a``. We prove this by induction on
+``a``. The base case is proved by right neutrality of ``zero``. The induction
+case requires a proof of the equality of the two left expressions
+
+.. code::
+
+    -- expression                       normal form
+    succ n + b                          succ (n + b)
+    b + succ n                          b + succ n
+
+Via the induction hypothesis and congruence we can prove the equality of ``succ
+(n + b)`` and ``succ (b + n)``. The flipped version of ``pullSucc`` can
+transform it into ``b + succ n``.
+
+.. code::
 
     plusCommutes: all {a b: Nat}: a + b = b + a := case
         \ {zero},   {b}   := zeroRightNeutral
-        \ {succ n}, {b}   := (mapEquals plusCommutes, flip pullSucc)
+        \ {succ n}, {b}   := (congruence succ plusCommutes, flip pullSucc)
 
+
+The associativity of addition
+
+.. code::
+
+    (a + b) + c = a + (b + c)
+
+can be proved by induction on ``a``. The base case is trivial. The proof of the
+induction step can be done by the equivalences
+
+.. code::
+
+    (succ n + b) + c
+    =                           -- normalisation
+    succ ((n + b) + c)
+    =                           -- induction hypothesis + congruence
+    succ (n + (b + c))
+    =                           -- normalisation (bwd)
+    succ n + (b + c)
+
+.. code::
 
     plusAssociates: all {a b c: Nat}: (a + b) + c = a + (b + c)
     := case
         \ {zero},   {b}, {c} := same
-        \ {succ n}, {b}, {c} := mapEquals plusAssociates
+        \ {succ n}, {b}, {c} := congruence plus plusAssociates
 
 
 
@@ -106,29 +160,77 @@ helper theorem.
     plusSwap: all {a b c: Nat}: a + (b + c) = b + (a + c)
     :=
         ( flip plusAssociates:                    _ = (a + b) + c
-        , mapEquals {\ x := x + c} plusCommutes:  _ = (b + a) + c
+        , congruence (\ x := x + c) plusCommutes: _ = (b + a) + c
         , plusAssociates:                         _ = b + (a + c)
         )
 
 
-Having ``plusSwap`` we can prove the distributivity of multiplication.
+Having ``plusSwap`` we can prove the distributivity of multiplication
+
+.. code::
+
+    a * (b + c) = a * b + a * c
+
+by induction on ``a``. The base case is trivial. The induction step requires a
+proof of
+
+.. code::
+
+    succ n * (b + c) = succ n * b + succ n * c
+
+The equality can be proved by the steps
+
+.. code::
+
+    succ n * (b + c)
+    =                               -- normalisation
+    (b + c) + n * (b + c)
+    =                               -- associativity of addition
+    b + (c + n * (b + c))
+    =                               -- induction hypothesis + congruence
+    b + (c + (n * b + n * c))
+    =                               -- plusSwap + congruence
+    b + (n * b + (c + n * c))
+    =                               -- associativity of addition (bwd)
+    (b + n * b) + (c + b * c)
+    =                               -- normalization (bwd)
+    succ n * b + succ n * c
 
 .. code::
 
     timesDistributes: all {a b c: Nat}: a * (b + c)  =  a * b + a * c
         -- Multiplication distributes over addition
     := case
-        \ {zero},    {b},   {c} := same
+        \ {zero},    {b},   {c} := refl
         \ {succ n},  {b},   {c} :=
-            -- goal: (b + c) + n * (b + c)  =  (b + n * b) + (c + n * c)
-            ( plusAssociates
-                : _  =  b + (c + n * (b + c))
-            , mapEquals {\ x := _ + (_ + x)} timesDistributes
-                : _  =  b + (c + (n * b + n * c))
-            , mapEquals {\ x := _ + x} plusSwap
-                : _  =  b + (n * b + (c + n * c))
+            -- goal:
+            --       succ n * (b + c)
+            --       =
+            --       succ n * b + succ n * c
+            ( plusAssociates:
+                    succ n * (b + c)
+                    =
+                    b + (c + n * (b + c))
+
+            , congruence
+                    (\ x := b + (c + x))
+                    timesDistributes
+                :   _
+                    =
+                    b + (c + (n * b + n * c))
+
+            , congruence
+                (\ x :=  b + x)
+                plusSwap
+                :  _
+                   =
+                   b + (n * b + (c + n * c))
+
             , flip plusAssociates
-                : _  =  (b + n * b) + (c + n * c)
+                :  _
+                   =
+                   succ n * b + succ n * c
+                   -- (b + n * b) + (c + n * c)
             )
 
 
@@ -202,12 +304,14 @@ Others
 
     leLtOrEq: all {a b: Nat}: a <= b -> a < b \/ a = b
     := case
-        \ {zero},   {zero},     start   := right same
+        \ {zero},   {zero},     start   := right refl
         \ {zero},   {succ _},   start   := left (next start)
-        \ {succ _}, {succ _},   next le :=
-            match leLtOrEq le case
+        \ {succ n}, {succ m},   next le :=
+            match
+                leLtOrEq le: n < m \/ n = m
+            case
                 \ left  lt  := left  (next lt)
-                \ right eq  := right (mapEquals eq)
+                \ right eq  := right (congruence succ eq)
 
 
     leSucc: all {a: Nat}: a <= succ a
@@ -364,7 +468,7 @@ Wellfounded Recursion
 
 
 Clearly all natural numbers are finite, because each number is constructed by
-finitely many application of the successor function. But here we invent another
+finitely many applications of the successor function. But here we invent another
 way to express the finiteness of natural numbers.
 
 We say that a number is finite, if all numbers below it are finite.
@@ -389,7 +493,7 @@ We can prove that all natural numbers are finite by an induction proof.
             let
                 aux: Finite n -> all {y}: y < succ n -> Finite y
                 := case
-                    \ (finN :=fin f), next le :=
+                    \ (finN := fin f), next le :=
                         match leLtOrEq le case
                             \ left  lt  := f lt
                             \ right eq  := replace {Finite} (flip eq) finN
