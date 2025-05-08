@@ -253,7 +253,8 @@ Equality is a congruence as well.
 
 .. code::
 
-    congr {A B: Any} {a b: A) (f: A -> B): a = b -> f a = f b
+    congr {A B: Any} {a b: A) {f: A -> B}: a = b -> f a = f b
+                --             ^ mandatory implicit (propositional type)
     :=
         rec (\ {x} : f x = f x := refl)
 

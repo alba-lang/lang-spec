@@ -85,7 +85,7 @@ This can be done by the induction hypothesis using congruence.
 
     pullSucc: all {a b: Nat}: a + succ b = succ (a + b) := case
         \ {zero},   {_} := refl
-        \ {succ n}, {_} := congruence succ pullSucc
+        \ {succ n}, {_} := congruence {succ} pullSucc
 
 Zero is the neutral element of addition. The left neutrality doesn't need a
 proof. It is evident by normalisation. The right neutrality ``a + zero = a``
@@ -95,7 +95,7 @@ requires an induction proof.
 
     zeroRightNeutral: all {a: Nat}: a + zero = a := case
         \ {zero}   := refl
-        \ {succ n} := congruence succ zeroRightNeutral
+        \ {succ n} := congruence {succ} zeroRightNeutral
 
 Addition is commutative i.e. ``a + b = b + a``. We prove this by induction on
 ``a``. The base case is proved by right neutrality of ``zero``. The induction
@@ -115,7 +115,7 @@ transform it into ``b + succ n``.
 
     plusCommutes: all {a b: Nat}: a + b = b + a := case
         \ {zero},   {b}   := zeroRightNeutral
-        \ {succ n}, {b}   := (congruence succ plusCommutes, flip pullSucc)
+        \ {succ n}, {b}   := (congruence {succ} plusCommutes, flip pullSucc)
 
 
 The associativity of addition
@@ -142,7 +142,7 @@ induction step can be done by the equivalences
     plusAssociates: all {a b c: Nat}: (a + b) + c = a + (b + c)
     := case
         \ {zero},   {b}, {c} := same
-        \ {succ n}, {b}, {c} := congruence plus plusAssociates
+        \ {succ n}, {b}, {c} := congruence {succ} plusAssociates
 
 
 
@@ -160,7 +160,7 @@ helper theorem.
     plusSwap: all {a b c: Nat}: a + (b + c) = b + (a + c)
     :=
         ( flip plusAssociates:                    _ = (a + b) + c
-        , congruence (\ x := x + c) plusCommutes: _ = (b + a) + c
+        , congruence {\ x := x + c} plusCommutes: _ = (b + a) + c
         , plusAssociates:                         _ = b + (a + c)
         )
 
@@ -213,14 +213,14 @@ The equality can be proved by the steps
                     b + (c + n * (b + c))
 
             , congruence
-                    (\ x := b + (c + x))
+                    {\ x := b + (c + x)}
                     timesDistributes
                 :   _
                     =
                     b + (c + (n * b + n * c))
 
             , congruence
-                (\ x :=  b + x)
+                {\ x :=  b + x}
                 plusSwap
                 :  _
                    =
@@ -311,7 +311,7 @@ Others
                 leLtOrEq le: n < m \/ n = m
             case
                 \ left  lt  := left  (next lt)
-                \ right eq  := right (congruence succ eq)
+                \ right eq  := right (congruence {succ} eq)
 
 
     leSucc: all {a: Nat}: a <= succ a
