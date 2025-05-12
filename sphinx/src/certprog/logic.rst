@@ -229,11 +229,11 @@ proved by pattern match.
 
 .. code::
 
-    rec {A: Any} {R: A -> A -> Any}
-    : (all {x}: R x x) -> all {x y: A}: x = y -> R x y
+    recurse {A: Any} {R: A -> A -> Any}
+    : (all x: R x x) -> all {x y: A}: x = y -> R x y
     :=
         case
-            reflR refl := reflR
+            reflR {x} {_} refl := reflR x
 
 
 The elaboration of the pattern match expression unifies ``x`` and ``y``.
@@ -245,7 +245,7 @@ More important than the recursor is the proof that ``(=)`` is leibniz equality.
 
     cast {A: Any} {a b: A} {F: A -> Any}: a = b -> F a -> F b
     :=
-        rec (\ {x} (p: F x) := p)
+        recurse (\ x (p: F x) := p)
 
 
 
@@ -253,10 +253,10 @@ Equality is a congruence as well.
 
 .. code::
 
-    congr {A B: Any} {a b: A) {f: A -> B}: a = b -> f a = f b
+    congruence {A B: Any} {a b: A) {f: A -> B}: a = b -> f a = f b
                 --             ^ mandatory implicit (propositional type)
     :=
-        rec (\ {x} : f x = f x := refl)
+        recurse (\ x : f x = f x := refl)
 
     -- higher order unification of the metavariable R:
 
@@ -273,7 +273,7 @@ Equality is symmetric and transitive.
 
     flip {A: Any} {a b: A}: a = b -> b = a
     :=
-        rec refl
+        recurse (\ x : x = x := refl)
 
         -- type of refl
 
