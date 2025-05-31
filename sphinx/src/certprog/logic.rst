@@ -229,23 +229,39 @@ proved by pattern match.
 
 .. code::
 
-    recurse {A: Any} {R: A -> A -> Any}
-    : (all x: R x x) -> all {x y: A}: x = y -> R x y
+    recurse {A: Any} {R: A -> A -> Any} (f: all x: R x x)
+    : all (x y: A): x = y -> R x y
     :=
         case
-            reflR {x} {_} refl := reflR x
+            (x) (_} refl := f x
 
 
 The elaboration of the pattern match expression unifies ``x`` and ``y``.
-Therefore ``reflR: R x x`` has the correct required type.
+Therefore ``f: R x x`` has the correct required type.
 
-More important than the recursor is the proof that ``(=)`` is leibniz equality.
+Note that ``R`` is not a propositional relation because it does not have the
+type ``A -> A -> Prop``. However the function ``f`` is able to generate for each
+``x`` an inhabitant of ``R x x``. Therefore ``R`` is in the nonpropositional
+world the equivalent of a reflexive relation.
+
+Note further that ``f`` is not a ghost function. Given a runtime object ``x`` it
+returns a runtime object of type ``R x x``. However when fed with a ghost object
+it returns only a ghost object. Since ``recurse`` has to return a runtime
+object, the argument ``x`` cannot be implicit.
+
+Even if the arguments ``x`` and ``y`` are not implicit, the are still derivable
+by unification bcause they are contained in the result type ``R x y``.
+
+
+
+More important than the recursor is the proof that ``(=)`` is leibniz equality
+which says that equal terms are indistinguishable.
 
 .. code::
 
-    cast {A: Any} {a b: A} {F: A -> Any}: a = b -> F a -> F b
-    :=
-        recurse (\ x (p: F x) := p)
+    cast {A: Any} {F: A -> Any}: all {a b}: a = b -> F a -> F b
+    := case
+        refl x := x
 
 
 
@@ -256,7 +272,7 @@ Equality is a congruence as well.
     congruence {A B: Any} {a b: A) {f: A -> B}: a = b -> f a = f b
                 --             ^ mandatory implicit (propositional type)
     :=
-        recurse (\ x : f x = f x := refl)
+        recurse (\ x : f x = f x := refl) a b
 
     -- higher order unification of the metavariable R:
 
@@ -266,6 +282,43 @@ Equality is a congruence as well.
         R x y := (f x = f y)
 
 
+Congruence can be proven with leibniz equality as well.
+
+.. code::
+
+    congruence {A B: Any} {a b: A} {f: A -> B} (eq: a = b) -> f a = f b
+    :=
+        cast eq (refl {f a})
+
+    -- higher order unification of the metavarialbe F
+
+    F b ~ f a = f b
+
+        F x := F1 x = F2 x
+        F1 b ~ f a
+            F1 x := f (F11 x)
+            F11 b ~ a
+                F11 x := a
+
+            F2 x := f (F21 x)
+            F21 b ~ b
+
+        F2 b ~ f b
+
+    F a ~ f a = f a
+    f a = f (F21 a) ~ f a = f a
+        F21 x := x
+
+
+
+The most straighforward proof of leibniz equaility is by pattern match.
+
+.. code::
+
+    congruence {A B: Any}: all {a b} {f: A -> B}: a = b -> f a = f b
+    := case
+        refl := refl
+
 
 Equality is symmetric and transitive.
 
@@ -273,7 +326,7 @@ Equality is symmetric and transitive.
 
     flip {A: Any} {a b: A}: a = b -> b = a
     :=
-        recurse (\ x : x = x := refl)
+        recurse (\ x : x = x := refl) a b
 
         -- type of refl
 
