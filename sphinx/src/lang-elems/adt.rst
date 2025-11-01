@@ -7,26 +7,26 @@ Abstract Data Types
 
 Abstract data types are a special kind of :ref:`records <Records>` ::
 
-    abstract class
+    abstract type
         Monoid (A: Any)         -- 'A' is the carrier type
     :=
         unit: A
         (+): A -> A -> A
-        leftNeutral:  all x: unit + x = x
-        rightNeutral: all x: x + unit = x
-        associative:  all x y z: x + y + z = x + (y + z)
+        leftNeutral:  all {x}:     unit + x = x
+        rightNeutral: all {x}:     x + unit = x
+        associative:  all {x y z}: x + y + z = x + (y + z)
 
 
 Objects of an abstract type are constructed with a record expression ::
 
-    record [zero, (+), ...]: Monoid ℕ       -- proof objects ommitted
+    record [zero, (+), ...]: Monoid Nat       -- proof objects ommitted
 
 
 Declaring a record with a carrier type as an abstract type has the advantage to
 declare nameless instantiation of the objects ::
 
-    _: Monoid ℕ :=
-        record [_, _, ℕ.zeroLeftNeutral, ℕ.zeroRightNeutral, ℕ.plusAssociative]
+    _: Monoid Nat :=
+        record [zero, (+), zeroLeftNeutral, zeroRightNeutral, plusAssociative]
 
 
 Rule:
@@ -37,7 +37,7 @@ Rule:
 
 Example: Monad with its ``Maybe`` instance ::
 
-    abstract class
+    abstract type
         Monad (M: Any → Any)
     :=
         return: all {A}: A → M A

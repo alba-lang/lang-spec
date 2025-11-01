@@ -91,12 +91,10 @@ which allow the construction or record objects.
 
 
 
-In case of ambiguity we add a type or a namespace annotation
+In case of ambiguity we add a type or a type annotation
 ::
 
     record ["Billy", "Boy", 3]: Person
-
-    Person.record ["Billy", "Boy", 3]
 
 
 
@@ -132,10 +130,17 @@ we can pattern match
     f {A: Any} {P: A → Prop}
     : Refine P → T
     := case
-        \ record [v, prf] :=
+        (record [v, prf]) :=
             expr            -- any expression using 'v' and 'prf'
                             -- and returning a 'T'
+    -- with named fields
+    := case
+        (record {value, proof}) := ...   -- field names and pattern
+                                        -- variables identical
 
+    := case
+        (record {value := v; proof := prf}) := ...
+            -- field names and pattern variables different
 
 
 
