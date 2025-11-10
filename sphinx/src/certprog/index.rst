@@ -12,3 +12,4 @@ Certified Programming
     vector
     parsing
     printf
+    universe_pattern
