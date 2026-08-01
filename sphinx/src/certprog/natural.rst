@@ -39,6 +39,66 @@ Basic Definitions
 
 
 
+Recursion and Induction Principles
+================================================================================
+
+There is a general recursion and induction principle for natural numbers. The
+general recursion and induction principles are not very useful, because usually
+it is more convenient to do recursion via pattern match.
+
+
+.. code::
+
+    recurse {P: Nat -> Any} (base: P zero) (next: all n: P n -> P (succ n))
+    : all n: P n
+    := case
+        zero :=
+            base : P zero
+
+        (succ k) :=
+            next k (recurse k): P (succ k)
+
+Here are some recursive functions which can be defined by using ``recurse``.
+
+.. code::
+
+    factorial (a: Nat): Nat
+    :=
+        recurse one (\ n fac := n * fac) a
+
+    fill-vec {A: Any} (n: Nat) (a: A): Vector A n :=
+        recurse {Vector A} [] (\ _ v := a :: v) n
+
+
+.. code::
+
+    (+) (a: Nat): Nat -> Nat
+    :=
+        recurse (\ x := x) (\ _ f x := succ (f x))
+
+
+
+
+A general induction principle can be defined by ``recurse``.
+
+.. code::
+
+    induce {P: Nat -> Prop} (base: P zero) (next: all {n}: P n -> P (succ n)) {n}
+    : P n
+    :=
+        recurse {P} base (\ k pk := next pk) n
+
+    -- or directly
+    induce {P: Nat -> Prop} (base: P zero) (next: all {n}: P n -> P (succ n))
+    : all {n}: P n
+    := case
+        {zero} :=
+            base: P zero
+
+        {succ k} :=
+            next induce: P (succ k)
+
+
 
 
 Zero is Different from a Successor
@@ -83,9 +143,23 @@ This can be done by the induction hypothesis using congruence.
 
 .. code::
 
-    pullSucc: all {a b: Nat}: a + succ b = succ (a + b) := case
-        \ {zero},   {_} := refl
-        \ {succ n}, {_} := congruence {succ} pullSucc
+    pullSucc: all {a b: Nat}: a + succ b = succ (a + b)
+    := case
+        \ {zero}   {_} :=
+            refl
+
+        \ {succ n} {_} :=
+            congruence pullSucc
+
+The proof for the base case is evident since ``zero + succ b`` normalizes to
+``succ b`` and ``succ(zero + b)`` normalizes to ``succ b`` so we just have to
+prove the triviality ``succ b = succ b`` which is proved by ``refl``.
+
+For the induction step we have to prove ``succ n + succ b =  succ (succ n + b)``
+which normalizes to ``succ (n + succ b) = succ (succ n + b)``. ``congruence eq``
+proves ``f a = f b`` where ``eq`` is a prove of ``a = b``. We can use
+``pullSucc`` to prove ``n + succ b = succ n + b``.
+
 
 Zero is the neutral element of addition. The left neutrality doesn't need a
 proof. It is evident by normalisation. The right neutrality ``a + zero = a``
@@ -93,9 +167,14 @@ requires an induction proof.
 
 .. code::
 
-    zeroRightNeutral: all {a: Nat}: a + zero = a := case
-        \ {zero}   := refl
-        \ {succ n} := congruence {succ} zeroRightNeutral
+    zeroRightNeutral: all {a: Nat}: a + zero = a
+    := case
+        \ {zero}   :=
+            refl
+
+        \ {succ n} :=
+            congruence zeroRightNeutral -- proves 'succ (n + zero) = succ n'
+
 
 Addition is commutative i.e. ``a + b = b + a``. We prove this by induction on
 ``a``. The base case is proved by right neutrality of ``zero``. The induction

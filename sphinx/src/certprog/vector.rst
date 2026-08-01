@@ -30,11 +30,11 @@ type ``A``.
 
     vectorLength {A}: all {n} {a: Vector A n}: length a = n
     := case
-        [] :=
+        {[]} :=
             refl
 
         {_ :: xs} :=
-            congruence succ vectorLength
+            congruence {succ} vectorLength
 
 
     rec

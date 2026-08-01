@@ -68,7 +68,7 @@ The empty list is right neutral with respect to appending.
     :=
         induce
             refl
-            (\ {x xs} := congruence (\xs := x :: xs) nilRightNeutral
+            (\ {x xs} := congruence {\xs := x :: xs} nilRightNeutral
 
 
 
@@ -103,7 +103,7 @@ to prove the goal.
             refl
 
         {x :: xs} {b} {c} :=
-            congruence (\ xs := x :: xs) associate
+            congruence {\ xs := x :: xs} associate
 
 
 

@@ -233,7 +233,7 @@ proved by pattern match.
     : all (x y: A): x = y -> R x y
     :=
         case
-            (x) (_} refl := f x
+            x _ refl := f x
 
 
 The elaboration of the pattern match expression unifies ``x`` and ``y``.
