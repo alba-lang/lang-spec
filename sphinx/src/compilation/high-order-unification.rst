@@ -96,3 +96,53 @@ The second constraint results in the following constraints
     B                  ~  Nat
     F (X2 + succ Y2)   ~  succ (k + succ y)
     F (succ (X2 + Y2)) ~  succ (succ (k + y))
+
+``B := Nat`` is the trivial solution for the first constraint.
+
+For the second constraint we try projection which results in
+
+.. code::
+
+    X2 + succ Y2  ~ succ (k + succ y)
+
+which fails immediately because to different rigid head terms. Note that
+projection on the third constraint fails because it generates the constraints
+
+.. code::
+
+    succ (X2 + Y2)  ~  succ (succ (k + y))
+    X2 + Y2         ~  succ (k + y)
+
+Alternatively we try imitation ``F X := succ (F1 X)`` on the second constraint
+and get
+
+.. code::
+
+    succ (F1 (X2 + succ Y2))   ~ succ (k + succ y)
+    succ (F1 (succ (X2 + Y2))) ~ succ (succ (k + y))
+
+    F1 (X2 + succ Y2)   ~  k + succ y
+    F1 (succ (X2 + Y2)) ~  succ (k + y)
+
+
+Now imitation fails because of the different head terms on the right hand sides.
+So only projection ``F1 X := X`` is left which yields
+
+.. code::
+
+    X2 + succ Y2   ~  k + succ y
+    succ (X2 + Y2) ~  succ (k + y)
+
+with the only solution ``X2 := k`` and ``Y2 := y``.
+
+The final solution is
+
+.. code::
+
+    pull-succ: all {x y: Nat}: x + succ y = succ (x + y)
+    := case
+        {zero} {_} :=
+            refl
+
+        {succ k} {y} :=
+            congruence {Nat} {Nat} {k + succ y} {succ (k + y)} {\x := succ((\y := y) x} (pull-succ {k} {y})
