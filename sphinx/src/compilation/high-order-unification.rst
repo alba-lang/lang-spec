@@ -16,7 +16,7 @@ the theorem ``congruence``.
     congruence {A B: Any} {x y: A} {f: A -> B}: x = y -> f x = f y
 
 All implicit variables ``A``, ``B``, ``x``, ``y``, ``f`` occur in the
-corresponing remainder of the type. If the expression ``congruence eq`` appears
+corresponding remainder of the type. If the expression ``congruence eq`` appears
 in the source text, then the compiler introduces for each implicit variable a
 metavariable i.e. it generates the following expression together with its actual
 type
@@ -145,4 +145,94 @@ The final solution is
             refl
 
         {succ k} {y} :=
-            congruence {Nat} {Nat} {k + succ y} {succ (k + y)} {\x := succ((\y := y) x} (pull-succ {k} {y})
+            congruence
+                {Nat} {Nat} {k + succ y} {succ (k + y)}
+                {\x := succ((\y := y) x}
+                (pull-succ {k} {y})
+
+
+
+Example: Transitivity of Equality
+================================================================================
+
+We want to prove transitivity of equality
+
+.. code::
+
+    (,): all {A: Any} {a b c: A}: a = b -> b = c -> a = c :=
+        eq-flip >> eq-cast
+
+using
+
+.. code::
+
+    (>>) {A B C: Any} (f: A -> B) (g: B -> C): A -> C
+
+    eq-flip {A: Any} {a b: A}: a = b -> b = a
+
+    eq-cast {A: Any} {a b: A} {F: A -> Any}: a = b -> F a -> F b
+
+
+We introduce metavariables for the implicit variables
+
+.. code::
+
+    (,): all {A: Any} {a b c: A}: a = b -> b = c -> a = c
+    :=
+        (>>)
+            {A1} {B1} {C1}
+            (eq-flip {A2} {x2} {y2}
+                :   (=) {A2} x2 y2 -> (=} {A2} y2 x2
+                <=  A1             -> B1
+            )
+            (eq-cast {A3} {F} {x3} {y3}
+                :   x3 = y3 -> F x3 -> F y3
+                <=  B1      -> C1
+            )
+            :   A1    -> C1
+            <=  a = b -> b = c -> a = c
+
+with the immediate instantiations and constraints
+
+.. code::
+
+    A1 := (=) {A} a b
+    C1 := (=) {A} b c -> (=) {A} a c
+    B1 := (=) {A3} x3 y3
+
+    F x3 -> F y3     <=  (=) {A} b c -> (=) {A} a c
+    (=) {A2} y2 x2   <=  (=) {A3} x3 y3
+    (=) {A2} x2 y2   <=  (=) {A} a b
+
+    -- by unification we obtain
+    A2 := A
+    A3 := A
+    x2 := a
+    y2 := b
+    x3 := b
+    y3 := a
+
+    F b  <=  (=) {A} b c
+    F a  <=  (=) {A} a c
+
+Projection for ``F`` fails because of different head terms. Immitation yields
+``F x := (=) {F1 x) (F2 x) (F3 x)`` which results in the constraints
+
+.. code::
+
+    F1 b   ~  A
+    F1 a   ~  A
+    F2 b   ~  b
+    F2 a   ~  a
+    F3 b   ~  c
+    F3 a   ~  c
+
+    -- resulting
+
+    F1 x := A       -- projection fails
+    F2 x := x       -- imitation  fails
+    F3 x := c       -- projection fails
+
+    -- result for F
+
+    F x := (=) {A} x c  -- after beta reduction
